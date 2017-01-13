@@ -1,6 +1,6 @@
 # site-financiamento
 Crowdfunding em docker/wordpress
-Código fonte do site anapirata.partidopirata.org
+Código fonte do site financiamento.partidopirata.org
 ===
 
 Este repositório compreende o arquivo [docker-compose](https://docs.docker.com/compose/overview) e os arquivos de [plugins](https://wordpress.org/plugins/) e [temas](https://wordpress.org/themes/) do [wordpress](https://wordpress.org/) para o site <http://anapirata.partidopirata.org>.

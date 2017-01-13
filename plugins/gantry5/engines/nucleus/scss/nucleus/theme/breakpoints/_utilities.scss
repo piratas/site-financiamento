@@ -1,0 +1,91 @@
+// Visibility
+@include breakpoint(large-desktop-range) {
+	.visible-large {
+		display: inherit !important;
+	}
+    .g-block.visible-large {
+        display: block !important;
+    }
+	.hidden-large {
+		display: none !important;
+	}
+	.visible-desktop {
+		display: inherit !important;
+	}
+    .g-block.visible-desktop {
+        display: block !important;
+    }
+	.hidden-desktop {
+		display: none !important;
+	}
+    .visible-phone {
+		display: none !important;
+	}
+}
+
+@include breakpoint(desktop-range) {
+	.visible-large {
+		display: none !important;
+	}
+	.visible-desktop {
+		display: inherit !important;
+	}
+    .g-block.visible-desktop {
+        display: block !important;
+    }
+	.hidden-desktop {
+		display: none !important;
+	}
+    .visible-phone {
+		display: none !important;
+	}
+}
+
+@include breakpoint(tablet-range) {
+	.visible-tablet {
+		display: inherit !important;
+	}
+    .g-block.visible-tablet {
+        display: block !important;
+    }
+	.hidden-tablet {
+		display: none !important;
+	}
+	.visible-desktop {
+		display: none !important;
+	}
+	.visible-large {
+		display: none !important;
+	}
+    .visible-phone {
+		display: none !important;
+	}
+}
+
+@include breakpoint(mobile-only) {
+	.visible-phone {
+		display: inherit !important;
+	}
+    .g-block.visible-phone {
+        display: block !important;
+    }
+	.hidden-phone {
+		display: none !important;
+	}
+	.visible-desktop {
+		display: none !important;
+	}
+	.visible-large {
+		display: none !important;
+	}
+}
+
+// Alignment
+@include breakpoint(mobile-only) {
+	.align-right {
+		text-align: inherit !important;
+	}
+	.align-left {
+		text-align: inherit !important;
+	}
+}

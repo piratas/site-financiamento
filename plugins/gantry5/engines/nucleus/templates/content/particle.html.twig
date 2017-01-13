@@ -1,0 +1,28 @@
+{% try %}
+    {% set id = segment.id %}
+    {% if noConfig %}
+        {% set enabled = true %}
+        {% set particle = segment.attributes %}
+    {% else %}
+        {% set enabled = gantry.config.get('particles.' ~ segment.subtype ~ '.enabled', 1) %}
+        {% set particle = gantry.config.getJoined('particles.' ~ segment.subtype, segment.attributes) %}
+    {% endif %}
+
+    {% set html %}
+        {% if enabled and (segment.attributes.enabled is null or segment.attributes.enabled) %}
+            {% include ['particles/' ~ segment.subtype ~ '.html.twig',
+            '@particles/' ~ segment.subtype ~ '.html.twig',
+            '@nucleus/content/missing.html.twig'] %}
+        {% endif %}
+    {% endset %}
+
+    {% set classes = ((not inContent ? 'g-content g-particle ' : 'g-particle ') ~ segment.classes|join(' '))|trim %}
+    {% if html|trim %}
+    <div class="{{ classes }}">
+        {{ html|raw }}
+    </div>
+    {% endif %}
+
+{% catch %}
+    <div class="alert alert-error"><strong>Error</strong> while rendering {{ segment.subtype }} particle.</div>
+{% endtry %}

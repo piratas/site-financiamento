@@ -1,0 +1,31 @@
+{% extends 'forms/' ~ layout|default('field') ~ '.html.twig' %}
+
+{# Not overridable #}
+{% block overridable %}
+{% endblock %}
+
+{% block contents %}
+    {% if field.label %}
+    <{{ field.tag|default('h5') }}>{{ field.label }}</{{ field.tag|default('h5') }}>
+    {% endif %}
+    <div{{ field.id ? (' id="' ~ field.id|e ~ '"')|raw }}>
+    {% if field.fields %}
+        {% for childName, child in field.fields %}
+            {% if childName starts with '.' %}
+                {% set childValue = current_value[childName[1:]] %}
+                {% set childDefault = default_value[childName[1:]] %}
+                {% set childName = name ~ childName %}
+            {% else %}
+                {% set childValue = nested(data, scope ~ childName) %}
+                {% set childDefault = nested(defaults, scope ~ childName) %}
+            {% endif %}
+            {% set childPrefix = prefix ~ childName ~ '.' %}
+
+            {% if child.type %}
+                {% include ["forms/fields/" ~ child.type|replace('.', '/') ~ ".html.twig", 'forms/fields/unknown/unknown.html.twig']
+                with {name: childName, field: child, current_value: childValue, value: null, default_value: childDefault, prefix: childPrefix } %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    </div>
+{% endblock %}

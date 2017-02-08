@@ -16,13 +16,17 @@ services:
     links:
       - mariadb
     volumes:
+      - "./entrypoint-wrapper.sh:/usr/local/bin/entrypoint-wrapper.sh:ro"
       - "./upload_size.ini:/usr/local/etc/php/conf.d/upload_size.ini"
       - "./themes:/var/www/html/wp-content/themes"
       - "./uploads:/var/www/html/wp-content/uploads"
       - "./plugins:/var/www/html/wp-content/plugins"
+      - "./languages:/var/www/html/wp-content/languages"
     ports:
       - "42082:80"
       - "42442:443"
     restart: always
     env_file:
       - "./wordpress.env"
+    entrypoint: "entrypoint-wrapper.sh"
+    command: "apache2-foreground"

@@ -13,4 +13,4 @@ do
   fi
 done
 
-source docker-entrypoint.sh $@
+docker-entrypoint.sh $@

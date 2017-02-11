@@ -1,0 +1,202 @@
+@import 'bourbon';
+@import './partials/mixins';
+@import './partials/animation';
+
+body,
+.site {
+	overflow-x: hidden;
+}
+
+.sph-hero {
+	margin-bottom: 2.618em;
+	text-align: center;
+	background-position: 50% 0;
+	position: relative;
+	margin-left: -2.618em;
+	margin-right: -2.618em;
+	overflow: hidden;
+}
+
+.video-wrapper {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	z-index: 1;
+}
+
+.video-wrapper video {
+	max-width: initial;
+	min-width: initial;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	@include transform(translateX(-50%) translateY(-50%));
+}
+
+.sph-hero .overlay {
+	padding: 2.618em;
+	position: relative;
+	z-index: 9;
+	box-sizing: content-box;
+}
+
+.sph-hero.sph-full-height.full .overlay {
+	box-sizing: content-box;
+}
+
+.sph-hero.sph-full-height .overlay {
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
+}
+
+.sph-inner {
+	z-index: 2;
+	position: absolute;
+	@include center;
+	width: 100%;
+	padding: 1.618em;
+	box-sizing: border-box !important;
+}
+
+.sph-hero .col-full {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.sph-hero.fixed {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.sph-hero h1 {
+	font-weight: 700;
+}
+
+.sph-hero p:last-child {
+	margin-bottom: 0;
+}
+
+.sph-hero.left {
+	text-align: left;
+}
+
+.sph-hero.right {
+	text-align: right;
+}
+
+.page-template-template-homepage .site-main .sph-hero:first-child {
+	margin-top: -4.236em;
+}
+
+.entry-content {
+	.sph-hero.full {
+		margin-left: 0;
+		margin-right: 0;
+	}
+}
+
+.overlay.animated {
+	h1 {
+		position: relative;
+		color: transparent !important;
+		overflow: hidden;
+		padding-bottom: .618em;
+		margin-bottom: 0;
+
+		&:after {
+			content: attr(data-content);
+			position: absolute;
+			top: 0;
+			left: 0;
+			height: 100%;
+			width: 100%;
+			@include transform( translateY( 100% ) );
+			@include animation-name( cd-reveal-up );
+			@include animation-fill-mode( forwards );
+			@include animation-duration(.4s);
+			@include animation-delay(.7s);
+			cursor: text;
+		}
+	}
+
+	span {
+		position: relative;
+		display: inline-block;
+		opacity: 1;
+
+		&::before {
+			/* this is the loading bar */
+			content: '';
+			position: absolute;
+			bottom: -.309em;
+			left: -10em;
+			height: 2px;
+			width: calc(100% + 20em);
+			@include animation( cd-loading-mask 1s .3s both );
+		}
+	}
+
+	.sph-hero-content-wrapper {
+		overflow: hidden;
+	}
+
+	.sph-hero-content {
+		position: relative;
+		margin: 0;
+		@include transform( translateY( -100% ) );
+		@include animation-name( cd-reveal-down );
+		@include animation-fill-mode( forwards );
+		padding-bottom: 4px; // To hide the button shadow on load
+		@include animation-duration(.4s);
+		@include animation-delay(.7s);
+	}
+}
+
+@media screen and (min-width: 768px) {
+	.sph-hero {
+		margin-bottom: 4.236em;
+		margin-left: -2.618em;
+		margin-right: -2.618em;
+	}
+
+	.sph-hero .overlay {
+		padding: 9.505em;
+	}
+
+	.sph-inner {
+		padding: 0 9.505em !important;
+		box-sizing: border-box !important;
+	}
+
+	.widget-area .widget,
+	.footer-widgets .widget {
+		.sph-hero {
+			padding: 1.618em;
+
+			.overlay {
+				padding: 0;
+			}
+
+			.sph-inner {
+				padding: 0 !important;
+			}
+		}
+	}
+
+	/**
+	 * Storefront Designer integration
+	 */
+	.sd-fixed-width .sph-hero {
+		margin-left: 0;
+		margin-right: 0;
+	}
+
+	.sd-fixed-width .sph-hero.full {
+		margin-left: -5.4285em;
+		margin-right: -5.4285em;
+	}
+}

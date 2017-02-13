@@ -3,6 +3,10 @@ description: Display social buttons.
 type: particle
 icon: fa-share-alt
 
+configuration:
+  caching:
+    type: static
+
 form:
   fields:
     enabled:

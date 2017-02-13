@@ -111,7 +111,7 @@ class ImageHelper {
 	 * @return boolean true if it's an animated gif, false if not
 	 */
 	public static function is_animated_gif( $file ) {
-		if ( strpos(strtolower($file), '.gif') == -1 ) {
+		if ( strpos(strtolower($file), '.gif') === false ) {
 			//doesn't have .gif, bail
 			return false;
 		}
@@ -185,7 +185,7 @@ class ImageHelper {
 	 */
 	protected static function add_constants() {
 		if ( !defined('WP_CONTENT_SUBDIR') ) {
-			$wp_content_path = str_replace(site_url(), '', WP_CONTENT_URL);
+			$wp_content_path = str_replace(get_home_url(), '', WP_CONTENT_URL);
 			define('WP_CONTENT_SUBDIR', $wp_content_path);
 		}
 	}
@@ -197,14 +197,14 @@ class ImageHelper {
 	 */
 	static function add_filters() {
 		add_filter('upload_dir', function( $arr ) {
-			$arr['relative'] = str_replace(site_url(), '', $arr['baseurl']);
+			$arr['relative'] = str_replace(get_home_url(), '', $arr['baseurl']);
 			return $arr;
 		} );
 	}
 
 	//-- end of public methods --//
 
-	
+
 	/**
 	 * Checks if attachment is an image before deleting generated files
 	 *
@@ -219,8 +219,8 @@ class ImageHelper {
 			}
 		}
 	}
-	
-	
+
+
 	/**
 	 * Deletes the auto-generated files for resize and letterboxing created by Timber
 	 * @param string  $local_file   ex: /var/www/wp-content/uploads/2015/my-pic.jpg
@@ -312,7 +312,7 @@ class ImageHelper {
 	public static function sideload_image( $file ) {
 		$loc = self::get_sideloaded_file_loc($file);
 		if ( file_exists($loc) ) {
-			return URLHelper::preslashit(URLHelper::get_rel_path($loc));
+			return URLHelper::file_system_to_url($loc);
 		}
 		// Download file to temp location
 		if ( !function_exists('download_url') ) {
@@ -342,7 +342,7 @@ class ImageHelper {
 	 * @param  string $url an URL (absolute or relative) pointing to an image
 	 * @return array       an array (see keys in code below)
 	 */
-	private static function analyze_url( $url ) {
+	public static function analyze_url( $url ) {
 		$result = array(
 			'url' => $url, // the initial url
 			'absolute' => URLHelper::is_absolute($url), // is the url absolute or relative (to home_url)
@@ -354,8 +354,8 @@ class ImageHelper {
 		);
 		$upload_dir = wp_upload_dir();
 		$tmp = $url;
-		if ( 0 === strpos($tmp, ABSPATH) ) {
-// we've been given a dir, not an url
+		if ( 0 === strpos($tmp, ABSPATH) || 0 === strpos($tmp, '/srv/www/') ) {
+			// we've been given a dir, not an url
 			$result['absolute'] = true;
 			if ( 0 === strpos($tmp, $upload_dir['basedir']) ) {
 				$result['base'] = self::BASE_UPLOADS; // upload based
@@ -372,10 +372,10 @@ class ImageHelper {
 			if ( 0 === strpos($tmp, $upload_dir['baseurl']) ) {
 				$result['base'] = self::BASE_UPLOADS; // upload based
 				$tmp = str_replace($upload_dir['baseurl'], '', $tmp);
-			}
-			if ( 0 === strpos($tmp, content_url()) ) {
+			} else if ( 0 === strpos($tmp, content_url()) ) {
 				$result['base'] = self::BASE_CONTENT; // content-based
-				$tmp = str_replace(content_url(), '', $tmp);
+				$tmp = self::theme_url_to_dir($tmp);
+				$tmp = str_replace(WP_CONTENT_DIR, '', $tmp);
 			}
 		}
 		$parts = pathinfo($tmp);
@@ -383,8 +383,30 @@ class ImageHelper {
 		$result['filename'] = $parts['filename'];
 		$result['extension'] = strtolower($parts['extension']);
 		$result['basename'] = $parts['basename'];
-		// todo filename
 		return $result;
+	}
+
+	/**
+	 * Converts a URL located in a theme directory into the raw file path
+	 * @param string 	$src a URL (http://example.org/wp-content/themes/twentysixteen/images/home.jpg)
+	 * @return string full path to the file in question
+	 */
+	static function theme_url_to_dir( $src ) 	{
+		$site_root = trailingslashit(get_theme_root_uri()).get_stylesheet();
+		$tmp = str_replace($site_root, '', $src);
+		//$tmp = trailingslashit(get_theme_root()).get_stylesheet().$tmp;
+		$tmp = get_stylesheet_directory().$tmp;
+		if ( realpath($tmp) ) {
+			return realpath($tmp);
+		}
+		return $tmp;
+	}
+
+	protected static function is_in_theme_dir( $path ) {
+		$root = realpath(get_stylesheet_directory_uri());
+		if ( 0 === strpos($path, $root) ) {
+			return true;
+		}
 	}
 
 	/**
@@ -417,6 +439,19 @@ class ImageHelper {
 	}
 
 	/**
+	 * Runs realpath to resolve symbolic links (../, etc). But only if it's a path and not a URL
+	 * @param  string $path
+	 * @return string 			the resolved path
+	 */
+	protected static function maybe_realpath( $path ) {
+		if ( strstr($path, '../') !== false ) {
+			return realpath($path);
+		}
+		return $path;
+	}
+
+
+	/**
 	 * Builds the absolute file system location of a file based on its different components
 	 *
 	 * @param  int    $base     one of self::BASE_UPLOADS, self::BASE_CONTENT to indicate if file is an upload or a content (theme or plugin)
@@ -425,19 +460,30 @@ class ImageHelper {
 	 * @return string           the file location
 	 */
 	private static function _get_file_path( $base, $subdir, $filename ) {
+		if ( URLHelper::is_url($subdir) ) {
+			$subdir = URLHelper::url_to_file_system($subdir);
+		}
+		$subdir = self::maybe_realpath($subdir);
+		
 		$path = '';
 		if ( self::BASE_UPLOADS == $base ) {
+			//it is in the Uploads directory
 			$upload_dir = wp_upload_dir();
 			$path = $upload_dir['basedir'];
-		}
-		if ( self::BASE_CONTENT == $base ) {
+		} else if ( self::BASE_CONTENT == $base ) {
+			//it is in the content directory, somewhere else ...
 			$path = WP_CONTENT_DIR;
 		}
-		if ( !empty($subdir) ) {
-			$path .= $subdir;
+		if ( self::is_in_theme_dir(trailingslashit($subdir).$filename) ) {
+			//this is for weird installs when the theme folder is outside of /wp-content
+			return trailingslashit($subdir).$filename;
 		}
-		$path .= '/'.$filename;
-		return $path;
+		if ( !empty($subdir) ) {
+			$path = trailingslashit($path).$subdir;
+		}
+		$path = trailingslashit($path).$filename;
+
+		return URLHelper::remove_double_slashes($path);
 	}
 
 
@@ -459,14 +505,15 @@ class ImageHelper {
 			return '';
 		}
 		$external = false;
-
 		// if external image, load it first
 		if ( URLHelper::is_external_content($src) ) {
 			$src = self::sideload_image($src);
 			$external = true;
 		}
+
 		// break down URL into components
 		$au = self::analyze_url($src);
+
 		// build URL and filenames
 		$new_url = self::_get_file_url(
 			$au['base'],
@@ -487,7 +534,6 @@ class ImageHelper {
 		
 		$new_url = apply_filters('timber/image/new_url', $new_url);
 		$destination_path = apply_filters('timber/image/new_path', $destination_path);
-		
 		// if already exists...
 		if ( file_exists($destination_path) ) {
 			if ( $force || filemtime($source_path) > filemtime($destination_path) ) {

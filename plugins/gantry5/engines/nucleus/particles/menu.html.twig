@@ -13,14 +13,12 @@
 {%- endmacro %}
 
 {% macro displayParticle(item, context) %}
-    {% if item.options.particle.enabled is null or item.options.particle.enabled %}
-        {% set context = context|merge({ particle: item.options.particle }) %}
-        {% set classes = item.options.block.class %}
-        <div class="menu-item-particle{{ classes ? ' ' ~ classes }}">
-        {% include ['particles/' ~ item.particle ~ '.html.twig', '@particles/' ~ item.particle ~ '.html.twig']
-        ignore missing with context only %}
-        </div>
-    {% endif %}
+    {% set context = context|merge({ particle: item.options.particle }) %}
+    {% set classes = item.options.block.class %}
+    <div class="menu-item-particle{{ classes ? ' ' ~ classes }}">
+    {% include ['particles/' ~ item.particle ~ '.html.twig', '@particles/' ~ item.particle ~ '.html.twig']
+    ignore missing with context only %}
+    </div>
 {% endmacro %}
 
 {% macro displayTitle(item) %}
@@ -53,7 +51,7 @@
                 {% if item.image %}
                     <img src="{{ url(item.image) }}" alt="{{ item.title }}" />
                 {% elseif item.icon %}
-                    <i class="{{ item.icon }}"></i>
+                    <i class="{{ item.icon }}" aria-hidden="true"></i>
                 {% endif %}
                 {% if item.url %}
                     <span class="g-menu-item-content">

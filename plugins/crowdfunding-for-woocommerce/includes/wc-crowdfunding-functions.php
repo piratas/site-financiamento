@@ -2,21 +2,21 @@
 /**
  * Crowdfunding for WooCommerce - Functions
  *
- * @version 2.3.1
+ * @version 2.3.2
  * @since   2.3.0
  * @author  Algoritmika Ltd.
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
-if ( ! function_exists( 'alg_get_user_campaing_standard_fields' ) ) {
+if ( ! function_exists( 'alg_get_user_campaign_standard_fields' ) ) {
 	/**
-	 * alg_get_user_campaing_standard_fields.
+	 * alg_get_user_campaign_standard_fields.
 	 *
-	 * @version 2.3.0
+	 * @version 2.3.2
 	 * @since   2.3.0
 	 */
-	function alg_get_user_campaing_standard_fields() {
+	function alg_get_user_campaign_standard_fields() {
 		return array(
 			'desc' => array(
 				'desc'      => __( 'Description', 'crowdfunding-for-woocommerce' ),
@@ -43,15 +43,15 @@ if ( ! function_exists( 'alg_get_user_campaing_standard_fields' ) ) {
 	}
 }
 
-if ( ! function_exists( 'alg_get_user_campaing_crowdfunding_fields' ) ) {
+if ( ! function_exists( 'alg_get_user_campaign_crowdfunding_fields' ) ) {
 	/**
-	 * alg_get_user_campaing_crowdfunding_fields.
+	 * alg_get_user_campaign_crowdfunding_fields.
 	 *
-	 * @version 2.3.0
+	 * @version 2.3.2
 	 * @since   2.3.0
 	 */
-	function alg_get_user_campaing_crowdfunding_fields() {
-		return array(
+	function alg_get_user_campaign_crowdfunding_fields() {
+		return apply_filters( 'alg_crowdfunding_user_campaign_fields', array(
 			'goal' => array(
 				'desc'      => __( 'Goal', 'crowdfunding-for-woocommerce' ) . ' (' . get_woocommerce_currency_symbol() . ')',
 				'type'      => 'price',
@@ -112,19 +112,19 @@ if ( ! function_exists( 'alg_get_user_campaing_crowdfunding_fields' ) ) {
 				'type'      => 'price',
 				'meta_name' => 'alg_crowdfunding_product_open_price_max_price',
 			),
-		);
+		) );
 	}
 }
 
-if ( ! function_exists( 'alg_get_user_campaing_all_fields' ) ) {
+if ( ! function_exists( 'alg_get_user_campaign_all_fields' ) ) {
 	/**
-	 * alg_get_user_campaing_all_fields.
+	 * alg_get_user_campaign_all_fields.
 	 *
-	 * @version 2.3.0
+	 * @version 2.3.2
 	 * @since   2.3.0
 	 */
-	function alg_get_user_campaing_all_fields() {
-		return array_merge( alg_get_user_campaing_standard_fields(), alg_get_user_campaing_crowdfunding_fields() );
+	function alg_get_user_campaign_all_fields() {
+		return array_merge( alg_get_user_campaign_standard_fields(), alg_get_user_campaign_crowdfunding_fields() );
 	}
 }
 

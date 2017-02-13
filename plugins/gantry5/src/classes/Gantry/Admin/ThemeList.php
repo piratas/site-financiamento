@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -57,18 +57,22 @@ class ThemeList
         natsort($files);
 
         foreach ($files as $theme) {
-            if ($locator('gantry-themes://' . $theme . '/gantry/theme.yaml')) {
-                $details = new ThemeDetails($theme);
-                $details->addStreams();
+            try {
+                if ($locator('gantry-themes://' . $theme . '/gantry/theme.yaml')) {
+                    $details = new ThemeDetails($theme);
+                    $details->addStreams();
 
-                $details['name'] = $theme;
-                $details['title'] = $details['details.name'];
-                $details['preview_url'] = $gantry['platform']->getThemePreviewUrl($theme);
-                $details['admin_url'] = $gantry['platform']->getThemeAdminUrl($theme);
-                $details['params'] = [];
+                    $details['name'] = $theme;
+                    $details['title'] = $details['details.name'];
+                    $details['preview_url'] = $gantry['platform']->getThemePreviewUrl($theme);
+                    $details['admin_url'] = $gantry['platform']->getThemeAdminUrl($theme);
+                    $details['params'] = [];
 
-                $list[$details->name] = $details;
-
+                    $list[$details->name] = $details;
+                }
+            } catch (\Exception $e) {
+                // Do not add broken themes into the list.
+                continue;
             }
         }
 

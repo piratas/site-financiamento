@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   GNU/GPLv2 and later
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
@@ -98,24 +98,32 @@ class Particle extends \WP_Widget
                 }
             }
 
+            $object = (object) array(
+                'id' => "widget-{$particle}-{$id}",
+                'type' => $type,
+                'subtype' => $particle,
+                'attributes' => $instance['options']['particle'],
+            );
 
             $context = array(
                 'gantry' => $this->container,
-                'inContent' => true,
-                'segment' => array(
-                    'id' => "widget-{$particle}-{$id}",
-                    'type' => $type,
-                    'subtype' => $particle,
-                    'attributes' =>  $instance['options']['particle'],
-                )
+                'inContent' => true
             );
 
-            $this->content[$md5] = apply_filters('widget_content', $theme->render("@nucleus/content/particle.html.twig", $context));
+            $this->content[$md5] = $theme->getContent($object, $context);
         }
 
-        if (trim($this->content[$md5])) {
+        $content = $this->content[$md5];
+
+        /** @var \Gantry\Framework\Document $document */
+        $document = $this->container['document'];
+        $document->addBlock($content);
+
+        $html = apply_filters('widget_content', $content->toString());
+
+        if (trim($html)) {
             echo $args['before_widget'];
-            echo $this->content[$md5];
+            echo $html;
             echo $args['after_widget'];
         }
     }

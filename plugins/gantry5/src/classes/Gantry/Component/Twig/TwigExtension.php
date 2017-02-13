@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -15,12 +15,9 @@ namespace Gantry\Component\Twig;
 
 use Gantry\Component\Gantry\GantryTrait;
 use Gantry\Component\Translator\TranslatorInterface;
-use Gantry\Framework\Document;
 use Gantry\Framework\Gantry;
 use Gantry\Framework\Request;
 use RocketTheme\Toolbox\ArrayTraits\NestedArrayAccess;
-use RocketTheme\Toolbox\File\File;
-use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
 
 class TwigExtension extends \Twig_Extension
 {
@@ -87,6 +84,7 @@ class TwigExtension extends \Twig_Extension
     public function getTokenParsers()
     {
         return [
+            new TokenParserPageblock(),
             new TokenParserAssets(),
             new TokenParserScripts(),
             new TokenParserStyles(),
@@ -421,7 +419,8 @@ class TwigExtension extends \Twig_Extension
         return implode("\n", $raw);
     }
 
-    public function colorContrastFunc($value) {
+    public function colorContrastFunc($value)
+    {
         $value = str_replace(' ', '', $value);
         $rgb = new \stdClass;
         $opacity = 1;

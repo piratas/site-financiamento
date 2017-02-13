@@ -233,13 +233,13 @@ class WC_PagSeguro_Gateway extends WC_Payment_Gateway {
 			'sandbox_email' => array(
 				'title'       => __( 'PagSeguro Sandbox Email', 'woocommerce-pagseguro' ),
 				'type'        => 'text',
-				'description' => sprintf( __( 'Please enter your PagSeguro sandbox email address. You can get your sandbox email %s.', 'woocommerce-pagseguro' ), '<a href="https://sandbox.pagseguro.uol.com.br/comprador-de-testes.html">' . __( 'here', 'woocommerce-pagseguro' ) . '</a>' ),
+				'description' => sprintf( __( 'Please enter your PagSeguro sandbox email address. You can get your sandbox email %s.', 'woocommerce-pagseguro' ), '<a href="https://sandbox.pagseguro.uol.com.br/vendedor/configuracoes.html">' . __( 'here', 'woocommerce-pagseguro' ) . '</a>' ),
 				'default'     => '',
 			),
 			'sandbox_token' => array(
 				'title'       => __( 'PagSeguro Sandbox Token', 'woocommerce-pagseguro' ),
 				'type'        => 'text',
-				'description' => sprintf( __( 'Please enter your PagSeguro sandbox token. You can get your sandbox token %s.', 'woocommerce-pagseguro' ), '<a href="https://sandbox.pagseguro.uol.com.br/comprador-de-testes.html">' . __( 'here', 'woocommerce-pagseguro' ) . '</a>' ),
+				'description' => sprintf( __( 'Please enter your PagSeguro sandbox token. You can get your sandbox token %s.', 'woocommerce-pagseguro' ), '<a href="https://sandbox.pagseguro.uol.com.br/vendedor/configuracoes.html">' . __( 'here', 'woocommerce-pagseguro' ) . '</a>' ),
 				'default'     => '',
 			),
 			'transparent_checkout' => array(
@@ -312,7 +312,7 @@ class WC_PagSeguro_Gateway extends WC_Payment_Gateway {
 
 		wp_enqueue_script( 'pagseguro-admin', plugins_url( 'assets/js/admin' . $suffix . '.js', plugin_dir_path( __FILE__ ) ), array( 'jquery' ), WC_PagSeguro::VERSION, true );
 
-		include 'admin/views/html-admin-page.php';
+		include dirname( __FILE__ ) . '/admin/views/html-admin-page.php';
 	}
 
 	/**
@@ -347,6 +347,7 @@ class WC_PagSeguro_Gateway extends WC_Payment_Gateway {
 				'tc_transfer'       => $this->tc_transfer,
 				'tc_ticket'         => $this->tc_ticket,
 				'tc_ticket_message' => $this->tc_ticket_message,
+				'flag'              => plugins_url( 'assets/images/brazilian-flag.png', plugin_dir_path( __FILE__ ) ),
 			), 'woocommerce/pagseguro/', WC_PagSeguro::get_templates_path() );
 		}
 	}
@@ -440,7 +441,7 @@ class WC_PagSeguro_Gateway extends WC_Payment_Gateway {
 				'lightbox_script_url' => $this->api->get_lightbox_url(),
 			), 'woocommerce/pagseguro/', WC_PagSeguro::get_templates_path() );
 		} else {
-			include 'views/html-receipt-page-error.php';
+			include dirname( __FILE__ ) . '/views/html-receipt-page-error.php';
 		}
 	}
 

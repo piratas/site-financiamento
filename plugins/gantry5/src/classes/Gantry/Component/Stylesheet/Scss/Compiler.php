@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -41,7 +41,9 @@ class Compiler extends BaseCompiler
 
     public function setBasePath($basePath)
     {
-        $this->basePath = rtrim(Document::rootUri(), '/') . '/' . Folder::getRelativePath($basePath);
+        /** @var Document $document */
+        $document = Gantry::instance()['document'];
+        $this->basePath = rtrim($document->rootUri(), '/') . '/' . Folder::getRelativePath($basePath);
     }
 
     public function setFonts(array $fonts)
@@ -351,8 +353,6 @@ class Compiler extends BaseCompiler
      * Clean parset files.
      *
      * @api
-     *
-     * @return array
      */
     public function cleanParsedFiles()
     {

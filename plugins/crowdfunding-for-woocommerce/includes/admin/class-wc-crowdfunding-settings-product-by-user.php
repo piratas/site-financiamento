@@ -2,7 +2,7 @@
 /**
  * Crowdfunding for WooCommerce - Product by User Section Settings
  *
- * @version 2.3.0
+ * @version 2.3.2
  * @since   2.3.0
  * @author  Algoritmika Ltd.
  */
@@ -64,7 +64,7 @@ class Alg_WC_Crowdfunding_Settings_Product_By_User {
 	/**
 	 * add_settings.
 	 *
-	 * @version 2.3.0
+	 * @version 2.3.2
 	 * @since   2.3.0
 	 */
 	function add_settings() {
@@ -82,7 +82,7 @@ class Alg_WC_Crowdfunding_Settings_Product_By_User {
 			$user_roles[ $_role_key ] = $_role['name'];
 		}
 
-		$fields = alg_get_user_campaing_all_fields();
+		$fields = alg_get_user_campaign_all_fields();
 		$fields_enabled_options  = array();
 		$fields_required_options = array();
 		$i = 0;
@@ -146,6 +146,7 @@ class Alg_WC_Crowdfunding_Settings_Product_By_User {
 				),
 				array(
 					'title'    => __( 'User Visibility', 'crowdfunding-for-woocommerce' ),
+					'desc_tip' => __( 'Limit form to selected user roles only. Leave empty to show to all users.', 'crowdfunding-for-woocommerce' ),
 					'id'       => 'alg_wc_crowdfunding_product_by_user_user_visibility',
 					'default'  => array(),
 					'type'     => 'multiselect',
@@ -178,9 +179,21 @@ class Alg_WC_Crowdfunding_Settings_Product_By_User {
 					'type'     => 'checkbox',
 				),
 				array(
-					'title'    => __( 'Add "My Campaigns" Tab to User\'s My Account Page', 'crowdfunding-for-woocommerce' ),
+					'title'    => __( 'Add "Campaigns" Tab to User\'s My Account Page', 'crowdfunding-for-woocommerce' ),
 					'desc'     => __( 'Add', 'crowdfunding-for-woocommerce' ),
 					'id'       => 'alg_wc_crowdfunding_product_by_user_add_to_my_account',
+					'default'  => 'yes',
+					'type'     => 'checkbox',
+				),
+				array(
+					'desc'     => __( 'Add Edit Campaign Button', 'crowdfunding-for-woocommerce' ),
+					'id'       => 'alg_wc_crowdfunding_product_by_user_add_to_my_account_edit',
+					'default'  => 'yes',
+					'type'     => 'checkbox',
+				),
+				array(
+					'desc'     => __( 'Add Delete Campaign Button', 'crowdfunding-for-woocommerce' ),
+					'id'       => 'alg_wc_crowdfunding_product_by_user_add_to_my_account_delete',
 					'default'  => 'yes',
 					'type'     => 'checkbox',
 				),

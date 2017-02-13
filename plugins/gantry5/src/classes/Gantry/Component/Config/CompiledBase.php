@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -13,7 +13,7 @@
 
 namespace Gantry\Component\Config;
 
-use Gantry\Framework\Base\Gantry;
+use Gantry\Framework\Gantry;
 use RocketTheme\Toolbox\File\PhpFile;
 
 /**
@@ -215,6 +215,8 @@ abstract class CompiledBase
 
         $this->createObject($cache['data']);
 
+        $this->finalizeObject();
+
         return true;
     }
 
@@ -255,7 +257,7 @@ abstract class CompiledBase
             'timestamp' => time(),
             'checksum' => $this->checksum(),
             'files' => $this->files,
-            'data' => $this->object->toArray()
+            'data' => $this->getState()
         ];
 
         $file->save($cache);
@@ -263,5 +265,10 @@ abstract class CompiledBase
         $file->free();
 
         $this->modified();
+    }
+
+    protected function getState()
+    {
+        return $this->object->toArray();
     }
 }

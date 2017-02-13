@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -15,7 +15,7 @@ namespace Gantry\Component\Theme;
 
 use Gantry\Component\File\CompiledYamlFile;
 use Gantry\Component\Filesystem\Streams;
-use Gantry\Framework\Base\Gantry;
+use Gantry\Framework\Gantry;
 use RocketTheme\Toolbox\ArrayTraits\Export;
 use RocketTheme\Toolbox\ArrayTraits\NestedArrayAccessWithGetters;
 use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;

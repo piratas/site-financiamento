@@ -5,7 +5,7 @@
  * Description: Gateway de pagamento PagSeguro para WooCommerce.
  * Author: Claudio Sanches
  * Author URI: http://claudiosmweb.com/
- * Version: 2.11.3
+ * Version: 2.11.5
  * License: GPLv2 or later
  * Text Domain: woocommerce-pagseguro
  * Domain Path: languages/
@@ -29,7 +29,7 @@ if ( ! class_exists( 'WC_PagSeguro' ) ) :
 		 *
 		 * @var string
 		 */
-		const VERSION = '2.11.3';
+		const VERSION = '2.11.5';
 
 		/**
 		 * Instance of this class.
@@ -102,7 +102,11 @@ if ( ! class_exists( 'WC_PagSeguro' ) ) :
 		public function plugin_action_links( $links ) {
 			$plugin_links = array();
 
-			$plugin_links[] = '<a href="' . esc_url( admin_url( 'admin.php?page=wc-settings&tab=checkout&section=wc_pagseguro_gateway' ) ) . '">' . __( 'Settings', 'woocommerce-pagseguro' ) . '</a>';
+			if ( defined( 'WC_VERSION' ) && version_compare( WC_VERSION, '2.1', '>=' ) ) {
+				$plugin_links[] = '<a href="' . esc_url( admin_url( 'admin.php?page=wc-settings&tab=checkout&section=pagseguro' ) ) . '">' . __( 'Settings', 'woocommerce-pagseguro' ) . '</a>';
+			} else {
+				$plugin_links[] = '<a href="' . esc_url( admin_url( 'admin.php?page=wc-settings&tab=checkout&section=wc_pagseguro_gateway' ) ) . '">' . __( 'Settings', 'woocommerce-pagseguro' ) . '</a>';
+			}
 
 			return array_merge( $plugin_links, $links );
 		}
@@ -111,9 +115,9 @@ if ( ! class_exists( 'WC_PagSeguro' ) ) :
 		 * Includes.
 		 */
 		private function includes() {
-			include_once 'includes/class-wc-pagseguro-xml.php';
-			include_once 'includes/class-wc-pagseguro-api.php';
-			include_once 'includes/class-wc-pagseguro-gateway.php';
+			include_once dirname( __FILE__ ) . '/includes/class-wc-pagseguro-xml.php';
+			include_once dirname( __FILE__ ) . '/includes/class-wc-pagseguro-api.php';
+			include_once dirname( __FILE__ ) . '/includes/class-wc-pagseguro-gateway.php';
 		}
 
 		/**
@@ -169,7 +173,7 @@ if ( ! class_exists( 'WC_PagSeguro' ) ) :
 			$settings = get_option( 'woocommerce_pagseguro_settings', array( 'method' => '' ) );
 
 			if ( 'transparent' === $settings['method'] && ! class_exists( 'Extra_Checkout_Fields_For_Brazil' ) ) {
-				include 'includes/admin/views/html-notice-missing-ecfb.php';
+				include dirname( __FILE__ ) . '/includes/admin/views/html-notice-missing-ecfb.php';
 			}
 		}
 
@@ -177,7 +181,7 @@ if ( ! class_exists( 'WC_PagSeguro' ) ) :
 		 * WooCommerce missing notice.
 		 */
 		public function woocommerce_missing_notice() {
-			include 'includes/admin/views/html-notice-missing-woocommerce.php';
+			include dirname( __FILE__ ) . '/includes/admin/views/html-notice-missing-woocommerce.php';
 		}
 	}
 

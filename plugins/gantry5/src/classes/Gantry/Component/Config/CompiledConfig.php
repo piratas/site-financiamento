@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -97,7 +97,9 @@ class CompiledConfig extends CompiledBase
     /**
      * Finalize configuration object.
      */
-    protected function finalizeObject() {}
+    protected function finalizeObject()
+    {
+    }
 
     /**
      * Load single configuration file and append it to the correct position.

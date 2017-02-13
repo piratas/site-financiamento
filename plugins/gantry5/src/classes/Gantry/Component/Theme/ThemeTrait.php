@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -14,14 +14,18 @@
 namespace Gantry\Component\Theme;
 
 use Gantry\Component\Config\Config;
+use Gantry\Component\Content\Block\ContentBlock;
+use Gantry\Component\Content\Block\ContentBlockInterface;
+use Gantry\Component\Content\Block\HtmlBlock;
 use Gantry\Component\File\CompiledYamlFile;
 use Gantry\Component\Filesystem\Folder;
 use Gantry\Component\Gantry\GantryTrait;
 use Gantry\Component\Layout\Layout;
 use Gantry\Component\Stylesheet\CssCompilerInterface;
-use Gantry\Component\Theme\ThemeDetails;
-use Gantry\Framework\Base\Gantry;
+use Gantry\Framework\Document;
+use Gantry\Framework\Menu;
 use Gantry\Framework\Services\ConfigServiceProvider;
+use RocketTheme\Toolbox\File\PhpFile;
 use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
 
 /**
@@ -521,7 +525,7 @@ trait ThemeTrait
                 case 'spacer':
                     GANTRY_DEBUGGER && \Gantry\Debugger::startTimer($item->id, "Rendering {$item->id}");
 
-                    $item->content = $this->renderContent($item);
+                    $item->content = $this->renderContent($item, ['prepare_layout' => true]);
                     // Note that content can also be null (postpone rendering).
                     if ($item->content === '') {
                         unset($items[$i]);
@@ -586,15 +590,123 @@ trait ThemeTrait
      *
      * Function is used to pre-render content.
      *
-     * @param object $item
+     * @param object|array $item
+     * @param array $options
      * @return string|null
      */
-    protected function renderContent($item)
+    public function renderContent($item, $options = [])
     {
-        $context = $this->getContext(['segment' => $item, 'prepare_layout' => true]);
+        $gantry = static::gantry();
 
-        $html = trim($this->render("@nucleus/content/{$item->type}.html.twig", $context));
+        $content = $this->getContent($item, $options);
 
+        /** @var Document $document */
+        $document = $gantry['document'];
+        $document->addBlock($content);
+
+        $html = $content->toString();
         return !strstr($html, '@@DEFERRED@@') ? $html : null;
+    }
+
+    /**
+     * Renders individual content block, like particle or position.
+     *
+     * Function is used to pre-render content.
+     *
+     * @param object|array $item
+     * @param array $options
+     * @return ContentBlockInterface
+     * @since 5.4.3
+     */
+    public function getContent($item, $options = [])
+    {
+        if (is_array($item)) {
+            $item = (object) $item;
+        }
+
+        $gantry = static::gantry();
+
+        /** @var Config $global */
+        $global = $gantry['global'];
+
+        $production = (bool) $global->get('production');
+        $subtype = $item->subtype;
+        $enabled = $gantry['config']->get("particles.{$subtype}.enabled", 1);
+
+        if (!$enabled) {
+            return new HtmlBlock;
+        }
+
+        $particle = $gantry['config']->getJoined("particles.{$subtype}", $item->attributes);
+
+        $cached = false;
+        $cacheKey = [];
+
+        // Enable particle caching only in production mode.
+        if ($production && isset($particle['caching'])) {
+            $caching = $particle['caching'] + ['type' => 'dynamic'];
+
+            switch ($caching['type']) {
+                case 'static':
+                    $cached = true;
+                    break;
+                case 'config_matches':
+                    if (isset($particle['caching']['values'])) {
+                        $values = (array) $particle['caching']['values'];
+                        $compare = array_intersect_key($particle, $values);
+                        $cached = ($values === $compare);
+                    }
+                    break;
+                case 'menu':
+                    /** @var Menu $menu */
+                    $menu = $gantry['menu'];
+                    $cacheId = $menu->getCacheId();
+
+                    // FIXME: menu caching needs to handle dynamic modules inside menu: turning it off for now.
+                    if (false && $cacheId !== null) {
+                        $cached = true;
+                        $cacheKey['menu_cache_key'] = $cacheId;
+                    }
+                    break;
+            }
+        }
+
+        if ($cached) {
+            $cacheKey['language'] = $gantry['page']->language;
+            $cacheKey['attributes'] = $particle;
+            $cacheKey += (array) $item;
+
+            /** @var UniformResourceLocator $locator */
+            $locator = $gantry['locator'];
+            $key = md5(json_encode($cacheKey));
+
+            $filename = $locator->findResource("gantry-cache://theme/html/{$key}.php", true, true);
+            $file = PhpFile::instance($filename);
+            if ($file->exists()) {
+                try {
+                    return ContentBlock::fromArray((array) $file->content());
+                } catch (\Exception $e) {
+                    // Invalid cache, continue to rendering.
+                    GANTRY_DEBUGGER && \Gantry\Debugger::addMessage(sprintf('Failed to load particle %s cache', $item->id), 'debug');
+                }
+            }
+        }
+
+        // Create new document context for assets.
+        $context = $this->getContext(['segment' => $item, 'enabled' => 1, 'particle' => $particle] + $options);
+
+        /** @var Document $document */
+        $document = $gantry['document'];
+        $document->push();
+        $html = trim($this->render("@nucleus/content/{$item->type}.html.twig", $context));
+        $content = $document->pop()->setContent($html);
+
+        if (isset($file)) {
+            // Save HTML and assets into the cache.
+            GANTRY_DEBUGGER && \Gantry\Debugger::addMessage(sprintf('Caching particle %s', $item->id), 'debug');
+            $file->save($content->toArray());
+        }
+
+        return $content;
     }
 }

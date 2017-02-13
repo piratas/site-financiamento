@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -114,6 +114,8 @@ class Module implements \ArrayAccess
 
     protected function init($data)
     {
+        unset($data['id'], $data['position']);
+
         $this->items = $data;
 
         if (isset($this->items['assignments'])) {
@@ -155,7 +157,7 @@ class Module implements \ArrayAccess
         /** @var UniformResourceLocator $locator */
         $locator = Gantry::instance()['locator'];
 
-        if (!$locator->findResource("gantry-positions://{$position}/{$name}.yaml")) {
+        if (!file_exists($locator->findResource("gantry-positions://{$position}/{$name}.yaml", true, true))) {
             return $name;
         }
 
@@ -163,7 +165,7 @@ class Module implements \ArrayAccess
 
         do {
             $count++;
-        } while ($locator->findResource("gantry-positions://{$position}/{$name}_{$count}.yaml"));
+        } while (file_exists($locator->findResource("gantry-positions://{$position}/{$name}_{$count}.yaml", true, true)));
 
         return "{$name}_{$count}";
     }

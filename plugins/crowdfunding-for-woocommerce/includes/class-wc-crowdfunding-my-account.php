@@ -2,7 +2,7 @@
 /**
  * Crowdfunding for WooCommerce - My Account
  *
- * @version 2.3.1
+ * @version 2.3.2
  * @since   2.3.0
  * @author  Algoritmika Ltd.
  */
@@ -101,17 +101,15 @@ class Alg_WC_Crowdfunding_My_Account {
 	/**
 	 * add_my_products_content_my_account_page.
 	 *
-	 * @version 2.3.1
+	 * @version 2.3.2
 	 * @since   2.3.0
 	 */
 	function add_my_products_content_my_account_page() {
-		/* if ( ! isset( $_GET['crowdfunding-campaigns'] ) ) {
-			return;
-		} */
 		$user_ID = get_current_user_id();
 		if ( 0 == $user_ID ) {
 			return;
 		}
+		// Delete campaign
 		if ( isset( $_GET['alg_crowdfunding_delete_product'] ) ) {
 			$product_id = $_GET['alg_crowdfunding_delete_product'];
 			$post_author_id = get_post_field( 'post_author', $product_id );
@@ -121,6 +119,7 @@ class Alg_WC_Crowdfunding_My_Account {
 				wp_delete_post( $product_id, true );
 			}
 		}
+		// Edit campaign
 		if ( isset( $_GET['alg_crowdfunding_edit_product'] ) ) {
 			$product_id = $_GET['alg_crowdfunding_edit_product'];
 			$post_author_id = get_post_field( 'post_author', $product_id );
@@ -130,6 +129,7 @@ class Alg_WC_Crowdfunding_My_Account {
 				echo do_shortcode( '[product_crowdfunding_add_new_campaign product_id="' . $product_id . '"]' );
 			}
 		}
+		// Get user campaigns
 		$offset = 0;
 		$block_size = 256;
 		$products = array();
@@ -159,20 +159,38 @@ class Alg_WC_Crowdfunding_My_Account {
 			$offset += $block_size;
 		}
 		wp_reset_postdata();
+		// Display user campaigns table
 		if ( 0 != count( $products ) ) {
-//			echo '<h2>' . __( 'My Campaigns', 'crowdfunding-for-woocommerce' ) . '</h2>';
+			$add_edit_button   = get_option( 'alg_wc_crowdfunding_product_by_user_add_to_my_account_edit', 'yes' );
+			$add_delete_button = get_option( 'alg_wc_crowdfunding_product_by_user_add_to_my_account_delete', 'yes' );
 			$table_data = array();
-			$table_data[] = array( '', __( 'Status', 'crowdfunding-for-woocommerce' ), __( 'Title', 'crowdfunding-for-woocommerce' ), __( 'Actions', 'crowdfunding-for-woocommerce' ) );
+			$table_header = array( '', __( 'Status', 'crowdfunding-for-woocommerce' ), __( 'Title', 'crowdfunding-for-woocommerce' ) );
+			if ( 'yes' === $add_edit_button || 'yes' === $add_delete_button ) {
+				$table_header[] = __( 'Actions', 'crowdfunding-for-woocommerce' );
+			}
+			$table_data[] = $table_header;
 			$i = 0;
 			foreach ( $products as $_product_id => $_product_data ) {
 				$i++;
-				$table_data[] = array(
+				$table_row = array(
 					get_the_post_thumbnail( $_product_id, array( 25, 25 ) ),
 					'<code>'. $_product_data['status'] . '</code>',
 					( 'publish' != $_product_data['status'] ? $_product_data['title'] : '<a href="' . get_permalink( $_product_id ) . '">' . $_product_data['title'] . '</a>' ),
-					'<a class="button" href="' . add_query_arg( 'alg_crowdfunding_edit_product',   $_product_id, remove_query_arg( array( 'alg_crowdfunding_edit_product_image_delete', 'alg_crowdfunding_delete_product' ) ) ) . '">' . __( 'Edit', 'crowdfunding-for-woocommerce' ) . '</a>' . ' ' .
-					'<a class="button" href="' . add_query_arg( 'alg_crowdfunding_delete_product', $_product_id, remove_query_arg( array( 'alg_crowdfunding_edit_product_image_delete', 'alg_crowdfunding_edit_product' ) ) ) . '" onclick="return confirm(\'' . __( 'Are you sure?', 'crowdfunding-for-woocommerce' ) . '\')">' . __( 'Delete', 'crowdfunding-for-woocommerce' ) . '</a>',
 				);
+				$actions_cell = array();
+				if ( 'yes' === $add_edit_button ) {
+					$action_link = add_query_arg( 'alg_crowdfunding_edit_product',   $_product_id, remove_query_arg( array( 'alg_crowdfunding_edit_product_image_delete', 'alg_crowdfunding_delete_product' ) ) );
+					$actions_cell[] ='<a class="button" href="' . $action_link . '">' . __( 'Edit', 'crowdfunding-for-woocommerce' ) . '</a>' . ' ';
+				}
+				if ( 'yes' === $add_delete_button ) {
+					$action_link = add_query_arg( 'alg_crowdfunding_delete_product', $_product_id, remove_query_arg( array( 'alg_crowdfunding_edit_product_image_delete', 'alg_crowdfunding_edit_product' ) ) );
+					$actions_cell[] = '<a class="button" href="' . $action_link . '" onclick="return confirm(\'' . __( 'Are you sure?', 'crowdfunding-for-woocommerce' ) . '\')">' . __( 'Delete', 'crowdfunding-for-woocommerce' ) . '</a>';
+				}
+				if ( ! empty( $actions_cell ) ) {
+					$actions_cell = implode( ' ', $actions_cell );
+					$table_row[] = $actions_cell;
+				}
+				$table_data[] = $table_row;
 			}
 			echo alg_get_table_html( $table_data, array( 'table_class' => 'shop_table shop_table_responsive my_account_orders' ) );
 		}

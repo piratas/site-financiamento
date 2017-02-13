@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -259,6 +259,14 @@ abstract class AbstractMenu implements \ArrayAccess, \Iterator, \Countable
         return $this->offsetGet($this->active);
     }
 
+    /**
+     * @return string|null
+     */
+    public function getCacheId()
+    {
+        return $this->active ?: '-inactive-';
+    }
+
     public function isActive($item)
     {
         $active = $this->getActive();
@@ -351,6 +359,8 @@ abstract class AbstractMenu implements \ArrayAccess, \Iterator, \Countable
             $parentTree = $tree;
             array_pop($parentTree);
 
+            // Enabled state should equal particle setting.
+            $item['enabled'] = !isset($item['options']['particle']['enabled']) || !empty($item['options']['particle']['enabled']);
             $item['level'] = $level = count($tree);
             $item['parent_id'] = implode('/', $parentTree);
             if (($start && $start > $level)

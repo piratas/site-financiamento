@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   GNU/GPLv2 and later
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
@@ -77,7 +77,7 @@ class Theme extends AbstractTheme
 
         // FIXME: Get timezone from WP.
         //$timezone = 'UTC';
-        //$twig->getExtension('core')->setTimezone(new \DateTimeZone($timezone));
+        //$twig->getExtension('Twig_Extension_Core')->setTimezone(new \DateTimeZone($timezone));
 
         return $twig;
     }
@@ -189,7 +189,8 @@ class Theme extends AbstractTheme
     {
         $gantry = Gantry::instance();
 
-        return $gantry['document']->urlFilter($text, true, 0);
+        // Only filter our streams.
+        return $gantry['document']->urlFilter($text, true, 0, true);
     }
 
     public function register_post_types()
@@ -371,7 +372,8 @@ class Theme extends AbstractTheme
         $locator = $gantry['locator'];
 
         $installed = is_dir($locator->findResource('gantry-theme://config/default', true, true));
-        if (!$installed) {
+        $linked = is_link($locator->findResource('gantry-theme://'));
+        if (!$installed && !$linked) {
             $this->install();
         }
 

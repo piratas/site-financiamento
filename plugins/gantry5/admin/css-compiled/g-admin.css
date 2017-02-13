@@ -296,10 +296,6 @@
 #g5-container .full-width { -webkit-flex-grow: 0; -moz-flex-grow: 0; flex-grow: 0; -ms-flex-positive: 0; -webkit-flex-basis: 100%; -moz-flex-basis: 100%; flex-basis: 100%; -ms-flex-preferred-size: 100%; }
 #g5-container .full-width .g-block { -webkit-flex-grow: 0; -moz-flex-grow: 0; flex-grow: 0; -ms-flex-positive: 0; -webkit-flex-basis: 100%; -moz-flex-basis: 100%; flex-basis: 100%; -ms-flex-preferred-size: 100%; }
 #g5-container .hidden { display: none; visibility: hidden; }
-#g5-container .visible-phone { display: none !important; }
-#g5-container .visible-tablet { display: none !important; }
-#g5-container .hidden-desktop { display: none !important; }
-#g5-container .visible-desktop { display: inherit !important; }
 @media print { #g5-container .visible-print { display: inherit !important; }
   #g5-container .g-block.visible-print { display: block !important; }
   #g5-container .hidden-print { display: none !important; } }
@@ -433,11 +429,11 @@ body.g-prime { color: #fff; background-color: #354D59; font-family: "roboto", "H
 @font-face { font-family: "rockettheme-apps"; font-style: normal; font-weight: normal; src: url("../fonts/rockettheme-apps/rockettheme-apps.eot?#iefix") format("embedded-opentype"), url("../fonts/rockettheme-apps/rockettheme-apps.woff2") format("woff2"), url("../fonts/rockettheme-apps/rockettheme-apps.woff") format("woff"), url("../fonts/rockettheme-apps/rockettheme-apps.ttf") format("truetype"), url("../fonts/rockettheme-apps/rockettheme-apps.svg#rockettheme-apps") format("svg"); }
 .font-small, #g5-container .card h4[data-g-collapse] .g-collapse, #g5-container .g-filters-bar label, #g5-container .g-filters-bar a, #g5-container #positions .position-key, #g5-container .g5-lm-particles-picker:not(.menu-editor-particles), #g5-container .g5-mm-particles-picker:not(.menu-editor-particles), #g5-container .g5-mm-modules-picker:not(.menu-editor-particles), #g5-container .g5-mm-widgets-picker:not(.menu-editor-particles), #g5-container #positions:not(.menu-editor-particles), #g5-container #menu-editor li .menu-item .menu-item-content .menu-item-subtitle, #g5-container .g5-dialog.g5-dialog-theme-default.g5-modal-filepicker .g5-content .g-files li, .fa.font-small, #g5-container .card h4[data-g-collapse] .fa.g-collapse, #g5-container .g-filters-bar label.fa, #g5-container .g-filters-bar a.fa, #g5-container #positions .fa.position-key, #g5-container .fa.g5-lm-particles-picker:not(.menu-editor-particles), #g5-container .fa.g5-mm-particles-picker:not(.menu-editor-particles), #g5-container .fa.g5-mm-modules-picker:not(.menu-editor-particles), #g5-container .fa.g5-mm-widgets-picker:not(.menu-editor-particles), #g5-container .fa#positions:not(.menu-editor-particles), #g5-container #menu-editor li .menu-item .menu-item-content .fa.menu-item-subtitle, #g5-container .g5-dialog.g5-dialog-theme-default.g5-modal-filepicker .g5-content .g-files li.fa { font-size: 0.8rem; vertical-align: middle; }
 
-i.fa-grav-spaceman, i.fa-grav-text, i.fa-grav-full, i.fa-grav-logo, i.fa-grav-symbol, i.fa-grav-logo-both, i.fa-grav-both, i.fa-gantry, i.fa-gantry-logo, i.fa-gantry-symbol, i.fa-gantry-logo-both, i.fa-gantry-both { font-family: 'rockettheme-apps'; speak: none; font-style: normal; font-weight: normal; font-variant: normal; text-transform: none; line-height: 1; /* Better Font Rendering =========== */ -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+i.fa-grav, i.fa-grav-spaceman, i.fa-grav-text, i.fa-grav-full, i.fa-grav-logo, i.fa-grav-symbol, i.fa-grav-logo-both, i.fa-grav-both, i.fa-gantry, i.fa-gantry-logo, i.fa-gantry-symbol, i.fa-gantry-logo-both, i.fa-gantry-both { font-family: 'rockettheme-apps'; speak: none; font-style: normal; font-weight: normal; font-variant: normal; text-transform: none; line-height: 1; /* Better Font Rendering =========== */ -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
 .fa-grav-logo:before, .fa-grav-text:before { content: "\61"; }
 
-.fa-grav-symbol:before, .fa-grav-spaceman:before { content: "\62"; }
+.fa-grav-symbol:before, i.fa-grav:before, .fa-grav-spaceman:before { content: "\62"; }
 
 .fa-grav-logo-both:before, .fa-grav-both:before, .fa-grav-full:before { content: "\66"; }
 
@@ -583,7 +579,7 @@ i.fa-grav-spaceman, i.fa-grav-text, i.fa-grav-full, i.fa-grav-logo, i.fa-grav-sy
 #g5-container .settings-block.search i { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); margin-top: -2px; }
 #g5-container .g-panel-filters { position: relative; margin-bottom: 1rem; display: inline-block; }
 #g5-container .g-panel-filters .search.settings-block { width: auto; display: inline-block; margin-bottom: 0; margin-right: 5px; }
-#g5-container .g-panel-filters .search, #g5-container .g-panel-filters input, #g5-container .g-panel-filters .button { font-size: 0.85rem; }
+#g5-container .g-panel-filters .search, #g5-container .g-panel-filters input, #g5-container .g-panel-filters .button { font-size: 0.85rem; display: inline-block; }
 #g5-container .g-filters-bar label, #g5-container .g-filters-bar a { display: inline-block; margin: 0 0 0 0.5rem; border-left: 1px solid #ddd; padding-left: 0.5rem; line-height: 1; }
 #g5-container .g-filters-bar label input, #g5-container .g-filters-bar a input { display: inline-block; }
 #g5-container .g-filters-bar label { padding-left: 0; border: 0; }
@@ -670,7 +666,7 @@ i.fa-grav-spaceman, i.fa-grav-text, i.fa-grav-full, i.fa-grav-logo, i.fa-grav-sy
 #g5-container #positions .g-grid > li:first-child, #g5-container #positions .g-grid > li:last-child { margin-top: 10px; margin-bottom: 10px; }
 #g5-container #positions .position-container { height: 257px; overflow-y: auto; overflow-x: hidden; }
 #g5-container #positions .position-container ul { position: relative; min-height: 95%; font-size: 1rem; }
-#g5-container #positions .position-container ul:empty:after { content: "Drop modules here..."; display: block; text-align: center; margin: 0 auto; vertical-align: middle; line-height: 257px; color: #bababa; position: absolute; font-size: 1rem; top: 0; left: 0; right: 0; bottom: 0; display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-wrap: normal; }
+#g5-container #positions .position-container ul:empty:after { content: "Drop Particles Here or Use the +"; display: block; text-align: center; margin: 0 auto; vertical-align: middle; line-height: 257px; color: #bababa; position: absolute; font-size: 1rem; top: 0; left: 0; right: 0; bottom: 0; display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-wrap: normal; }
 #g5-container #positions .position-container li { -webkit-box-align: center; -moz-box-align: center; box-align: center; -webkit-align-items: center; -moz-align-items: center; -ms-align-items: center; -o-align-items: center; align-items: center; -ms-flex-align: center; display: -webkit-box; display: -moz-box; display: box; display: -webkit-flex; display: -moz-flex; display: -ms-flexbox; display: flex; -webkit-box-orient: horizontal; -moz-box-orient: horizontal; box-orient: horizontal; -webkit-box-direction: normal; -moz-box-direction: normal; box-direction: normal; -webkit-flex-direction: row; -moz-flex-direction: row; flex-direction: row; -ms-flex-direction: row; -webkit-box-pack: start; -moz-box-pack: start; box-pack: start; -webkit-justify-content: flex-start; -moz-justify-content: flex-start; -ms-justify-content: flex-start; -o-justify-content: flex-start; justify-content: flex-start; -ms-flex-pack: start; }
 #g5-container #positions .position-container li:hover .item-settings { opacity: 1; -webkit-transition: opacity 0.2s; -moz-transition: opacity 0.2s; transition: opacity 0.2s; }
 #g5-container #positions .position-container .position-dragging.sortable-fallback { background: #fff; }
@@ -1399,8 +1395,8 @@ html.g5-dialog-open { overflow: hidden; }
 #g5-container .settings-block .g-keyvalue-field ul li.g-keyvalue-warning { color: orange; }
 #g5-container .settings-block .g-keyvalue-field ul .g-keyvalue-sep { position: absolute; top: 50%; left: 50%; z-index: 1; color: #ddd; margin: -12px 0 0 -8px; }
 #g5-container .settings-block .g-keyvalue-field ul input { margin-right: -4px; }
-#g5-container .settings-block .g-keyvalue-field ul input.g-keyvalue-input-key { width: 50%; font-weight: bold; border-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; }
-#g5-container .settings-block .g-keyvalue-field ul input.g-keyvalue-input-value { width: 50%; border-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+#g5-container .settings-block .g-keyvalue-field ul input.g-keyvalue-input-key { width: 50%; display: inline-block; font-weight: bold; border-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+#g5-container .settings-block .g-keyvalue-field ul input.g-keyvalue-input-value { width: 50%; display: inline-block; border-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
 #g5-container .settings-block .g-keyvalue-field ul [data-keyvalue-remove] { cursor: pointer; display: none; margin-right: -1rem; }
 #g5-container .settings-block .g-keyvalue-field.g-keyvalue-small ul .g-keyvalue-sep { left: 35%; }
 #g5-container .settings-block .g-keyvalue-field.g-keyvalue-small ul input.g-keyvalue-input-key { width: 35%; }

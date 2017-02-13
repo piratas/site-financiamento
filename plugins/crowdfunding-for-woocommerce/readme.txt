@@ -1,20 +1,19 @@
 === Crowdfunding for WooCommerce ===
 Contributors: algoritmika,anbinder
-Donate link: http://algoritmika.com/donate/
+Donate link: https://www.paypal.me/anbinder
 Tags: woocommerce,crowdfunding
 Requires at least: 4.4
-Tested up to: 4.6
-Stable tag: 2.3.1
+Tested up to: 4.7
+Stable tag: 2.3.4
 License: GNU General Public License v3.0
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
-Crowdfunding for WooCommerce plugin adds full crowdfunding support to WooCommerce.
+Crowdfunding products for WooCommerce.
 
 == Description ==
 
-Crowdfunding products for WooCommerce.
+Plugin adds full crowdfunding support to WooCommerce.
 
-When enabled plugin adds full crowdfunding support to WooCommerce.
 When adding or editing a product, you will have the possibility to set for each product individually:
 
 * Goal (i.e. pledged) amount.
@@ -65,18 +64,50 @@ When displaying crowdfunding data for the product, you should use plugin's short
 
 = Feedback =
 * We are open to your suggestions and feedback. Thank you for using or trying out one of our plugins!
-* Drop us a line at [www.algoritmika.com](http://www.algoritmika.com)
+* Drop us a line at [www.algoritmika.com](http://www.algoritmika.com).
 
 = More =
-* Visit the [Crowdfunding for WooCommerce plugin page](http://coder.fm/item/crowdfunding-for-woocommerce-plugin/)
+* Visit the [Crowdfunding for WooCommerce plugin page](http://coder.fm/item/crowdfunding-for-woocommerce-plugin/).
 
 == Installation ==
 
-1. Upload the entire 'crowdfunding-for-woocommerce' folder to the '/wp-content/plugins/' directory
-2. Activate the plugin through the 'Plugins' menu in WordPress
+1. Upload the entire 'crowdfunding-for-woocommerce' folder to the '/wp-content/plugins/' directory.
+2. Activate the plugin through the 'Plugins' menu in WordPress.
 3. Start by visiting plugin settings at WooCommerce > Settings > Crowdfunding. Then try adding or editing a product.
 
 == Changelog ==
+
+= 2.3.4 - 21/12/2016 =
+* Dev - `load_plugin_textdomain` moved from `init` hook to constructor.
+* Tweak - readme.txt updated.
+* Tweak - basename check added.
+
+= 2.3.3 - 16/12/2016 =
+* Fix - `load_plugin_textdomain` moved from `init` hook to constructor.
+* Dev - jQuery dependency and loading in footer added to `wp_enqueue_script( 'alg-datepicker' )`.
+* Dev - `select` type added to user campaign and admin fields. Can be used in `alg_crowdfunding_admin_fields`, `alg_crowdfunding_user_campaign_fields`, `alg_crowdfunding_user_campaign_save_fields` hooks.
+* Dev - Brazilian Portuguese (`pt_BR`) translation updated.
+* Tweak - Donate link changed.
+* Tweak - Typo (to and too) fixed.
+
+= 2.3.2 - 01/12/2016 =
+* Fix - Radio Buttons for Variable Products - Disable add to cart button on campaign not started or not active.
+* Fix - `current_time` result converted to `int`.
+* Fix - User Campaigns - User Visibility - Option not functioning correctly, fixed.
+* Dev - Open Price - "Number of Decimals (Price Step)" admin option added.
+* Dev - User Campaigns - "Campaigns" Tab - "Add Edit Campaign Button" and "Add Delete Campaign Button" options added.
+* Dev - Admin fields meta box in product edit - `required` option added.
+* Dev - `alg_crowdfunding_admin_fields` and `alg_crowdfunding_user_campaign_fields` filters added. `alg_crowdfunding_user_campaign_save_fields` action added.
+* Dev - Plugin version added to all `wp_enqueue_style`, `wp_enqueue_script`, `wp_register_script`.
+* Dev - `display="date"` changed to `display="alg_crowdfunding_date"`; `display="time"` changed to `display="alg_crowdfunding_time"`.
+* Dev - Language (POT) file updated.
+* Dev - `do_shortcode()` added to `is_purchasable_html()`.
+* Dev - `[product_crowdfunding_time_to_start]` shortcode added (with `campaign_will_start`, `campaign_started` and `precision` attributes).
+* Dev - `[product_crowdfunding_time_remaining]` - Full "time left" returned. `campaign_will_end`, `campaign_ended` and `precision` attributes added.
+* Dev - Brazilian Portuguese (`pt_BR`) translation files added.
+* Tweak - User Campaigns - User Visibility - Description tip added.
+* Tweak - Typo in functions names fixed.
+* Tweak - User Campaigns - "Campaigns" Tab - Admin option title fixed.
 
 = 2.3.1 - 10/11/2016 =
 * Fix - "Enable Open Pricing" checkbox not saving in admin product edit, fixed.

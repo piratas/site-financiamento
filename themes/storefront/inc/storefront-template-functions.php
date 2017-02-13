@@ -50,7 +50,7 @@ if ( ! function_exists( 'storefront_comment' ) ) {
 			<?php endif; ?>
 
 			<a href="<?php echo esc_url( htmlspecialchars( get_comment_link( $comment->comment_ID ) ) ); ?>" class="comment-date">
-				<?php echo '<time>' . get_comment_date() . '</time>'; ?>
+				<?php echo '<time datetime="' . get_comment_date( 'c' ) . '">' . get_comment_date() . '</time>'; ?>
 			</a>
 		</div>
 		<?php if ( 'div' != $args['style'] ) : ?>
@@ -93,21 +93,21 @@ if ( ! function_exists( 'storefront_footer_widgets' ) ) {
 
 		if ( $widget_columns > 0 ) : ?>
 
-			<section class="footer-widgets col-<?php echo intval( $widget_columns ); ?> fix">
+			<div class="footer-widgets col-<?php echo intval( $widget_columns ); ?> fix">
 
 				<?php
 				$i = 0;
 				while ( $i < $widget_columns ) : $i++;
 					if ( is_active_sidebar( 'footer-' . $i ) ) : ?>
 
-						<section class="block footer-widget-<?php echo intval( $i ); ?>">
+						<div class="block footer-widget-<?php echo intval( $i ); ?>">
 							<?php dynamic_sidebar( 'footer-' . intval( $i ) ); ?>
-						</section>
+						</div>
 
 					<?php endif;
 				endwhile; ?>
 
-			</section><!-- /.footer-widgets  -->
+			</div><!-- /.footer-widgets  -->
 
 		<?php endif;
 	}
@@ -125,7 +125,7 @@ if ( ! function_exists( 'storefront_credit' ) ) {
 		<div class="site-info">
 			<?php echo esc_html( apply_filters( 'storefront_copyright_text', $content = '&copy; ' . get_bloginfo( 'name' ) . ' ' . date( 'Y' ) ) ); ?>
 			<?php if ( apply_filters( 'storefront_credit_link', true ) ) { ?>
-			<br /> <?php printf( esc_attr__( '%1$s designed by %2$s.', 'storefront' ), 'Storefront', '<a href="http://www.woothemes.com" alt="Premium WordPress Themes & Plugins by WooThemes" title="Premium WordPress Themes & Plugins by WooThemes" rel="designer">WooThemes</a>' ); ?>
+			<br /> <?php printf( esc_attr__( '%1$s designed by %2$s.', 'storefront' ), 'Storefront', '<a href="http://www.woocommerce.com" title="WooCommerce - The Best eCommerce Platform for WordPress" rel="author">WooCommerce</a>' ); ?>
 			<?php } ?>
 		</div><!-- .site-info -->
 		<?php
@@ -153,24 +153,68 @@ if ( ! function_exists( 'storefront_header_widget_region' ) ) {
 
 if ( ! function_exists( 'storefront_site_branding' ) ) {
 	/**
-	 * Display Site Branding
+	 * Site branding wrapper and display
 	 *
 	 * @since  1.0.0
 	 * @return void
 	 */
 	function storefront_site_branding() {
+		?>
+		<div class="site-branding">
+			<?php storefront_site_title_or_logo(); ?>
+		</div>
+		<?php
+	}
+}
+
+if ( ! function_exists( 'storefront_site_title_or_logo' ) ) {
+	/**
+	 * Display the site title or logo
+	 *
+	 * @since 2.1.0
+	 * @param bool $echo Echo the string or return it.
+	 * @return string
+	 */
+	function storefront_site_title_or_logo( $echo = true ) {
 		if ( function_exists( 'the_custom_logo' ) && has_custom_logo() ) {
-			the_custom_logo();
+			$logo = get_custom_logo();
+			$html = is_home() ? '<h1 class="logo">' . $logo . '</h1>' : $logo;
 		} elseif ( function_exists( 'jetpack_has_site_logo' ) && jetpack_has_site_logo() ) {
-			jetpack_the_site_logo();
-		} else { ?>
-			<div class="site-branding">
-				<h1 class="site-title"><a href="<?php echo esc_url( home_url( '/' ) ); ?>" rel="home"><?php bloginfo( 'name' ); ?></a></h1>
-				<?php if ( '' != get_bloginfo( 'description' ) ) { ?>
-					<p class="site-description"><?php echo bloginfo( 'description' ); ?></p>
-				<?php } ?>
-			</div>
-		<?php }
+			// Copied from jetpack_the_site_logo() function.
+			$logo    = site_logo()->logo;
+			$logo_id = get_theme_mod( 'custom_logo' ); // Check for WP 4.5 Site Logo
+			$logo_id = $logo_id ? $logo_id : $logo['id']; // Use WP Core logo if present, otherwise use Jetpack's.
+			$size    = site_logo()->theme_size();
+			$html    = sprintf( '<a href="%1$s" class="site-logo-link" rel="home" itemprop="url">%2$s</a>',
+				esc_url( home_url( '/' ) ),
+				wp_get_attachment_image(
+					$logo_id,
+					$size,
+					false,
+					array(
+						'class'     => 'site-logo attachment-' . $size,
+						'data-size' => $size,
+						'itemprop'  => 'logo'
+					)
+				)
+			);
+
+			$html = apply_filters( 'jetpack_the_site_logo', $html, $logo, $size );
+		} else {
+			$tag = is_home() ? 'h1' : 'div';
+
+			$html = '<' . esc_attr( $tag ) . ' class="beta site-title"><a href="' . esc_url( home_url( '/' ) ) . '" rel="home">' . esc_html( get_bloginfo( 'name' ) ) . '</a></' . esc_attr( $tag ) .'>';
+
+			if ( '' !== get_bloginfo( 'description' ) ) {
+				$html .= '<p class="site-description">' . esc_html( get_bloginfo( 'description', 'display' ) ) . '</p>';
+			}
+		}
+
+		if ( ! $echo ) {
+			return $html;
+		}
+
+		echo $html;
 	}
 }
 
@@ -184,7 +228,7 @@ if ( ! function_exists( 'storefront_primary_navigation' ) ) {
 	function storefront_primary_navigation() {
 		?>
 		<nav id="site-navigation" class="main-navigation" role="navigation" aria-label="<?php esc_html_e( 'Primary Navigation', 'storefront' ); ?>">
-		<button class="menu-toggle" aria-controls="primary-navigation" aria-expanded="false"><span><?php echo esc_attr( apply_filters( 'storefront_menu_toggle_text', __( 'Menu', 'storefront' ) ) ); ?></span></button>
+		<button class="menu-toggle" aria-controls="site-navigation" aria-expanded="false"><span><?php echo esc_attr( apply_filters( 'storefront_menu_toggle_text', __( 'Menu', 'storefront' ) ) ); ?></span></button>
 			<?php
 			wp_nav_menu(
 				array(
@@ -302,7 +346,7 @@ if ( ! function_exists( 'storefront_post_header' ) ) {
 				storefront_posted_on();
 			}
 
-			the_title( sprintf( '<h1 class="entry-title"><a href="%s" rel="bookmark">', esc_url( get_permalink() ) ), '</a></h1>' );
+			the_title( sprintf( '<h2 class="alpha entry-title"><a href="%s" rel="bookmark">', esc_url( get_permalink() ) ), '</a></h2>' );
 		}
 		?>
 		</header><!-- .entry-header -->
@@ -320,7 +364,13 @@ if ( ! function_exists( 'storefront_post_content' ) ) {
 		?>
 		<div class="entry-content">
 		<?php
-		storefront_post_thumbnail( 'full' );
+
+		/**
+		 * Functions hooked in to storefront_post_content_before action.
+		 *
+		 * @hooked storefront_post_thumbnail - 10
+		 */
+		do_action( 'storefront_post_content_before' );
 
 		the_content(
 			sprintf(
@@ -328,6 +378,8 @@ if ( ! function_exists( 'storefront_post_content' ) ) {
 				'<span class="screen-reader-text">' . get_the_title() . '</span>'
 			)
 		);
+
+		do_action( 'storefront_post_content_after' );
 
 		wp_link_pages( array(
 			'before' => '<div class="page-links">' . __( 'Pages:', 'storefront' ),
@@ -477,7 +529,7 @@ if ( ! function_exists( 'storefront_product_categories' ) ) {
 	 */
 	function storefront_product_categories( $args ) {
 
-		if ( is_woocommerce_activated() ) {
+		if ( storefront_is_woocommerce_activated() ) {
 
 			$args = apply_filters( 'storefront_product_categories_args', array(
 				'limit' 			=> 3,
@@ -487,7 +539,7 @@ if ( ! function_exists( 'storefront_product_categories' ) ) {
 				'title'				=> __( 'Shop by Category', 'storefront' ),
 			) );
 
-			echo '<section class="storefront-product-section storefront-product-categories">';
+			echo '<section class="storefront-product-section storefront-product-categories" aria-label="Product Categories">';
 
 			do_action( 'storefront_homepage_before_product_categories' );
 
@@ -520,7 +572,7 @@ if ( ! function_exists( 'storefront_recent_products' ) ) {
 	 */
 	function storefront_recent_products( $args ) {
 
-		if ( is_woocommerce_activated() ) {
+		if ( storefront_is_woocommerce_activated() ) {
 
 			$args = apply_filters( 'storefront_recent_products_args', array(
 				'limit' 			=> 4,
@@ -528,7 +580,7 @@ if ( ! function_exists( 'storefront_recent_products' ) ) {
 				'title'				=> __( 'New In', 'storefront' ),
 			) );
 
-			echo '<section class="storefront-product-section storefront-recent-products">';
+			echo '<section class="storefront-product-section storefront-recent-products" aria-label="Recent Products">';
 
 			do_action( 'storefront_homepage_before_recent_products' );
 
@@ -559,7 +611,7 @@ if ( ! function_exists( 'storefront_featured_products' ) ) {
 	 */
 	function storefront_featured_products( $args ) {
 
-		if ( is_woocommerce_activated() ) {
+		if ( storefront_is_woocommerce_activated() ) {
 
 			$args = apply_filters( 'storefront_featured_products_args', array(
 				'limit'   => 4,
@@ -569,7 +621,7 @@ if ( ! function_exists( 'storefront_featured_products' ) ) {
 				'title'   => __( 'We Recommend', 'storefront' ),
 			) );
 
-			echo '<section class="storefront-product-section storefront-featured-products">';
+			echo '<section class="storefront-product-section storefront-featured-products" aria-label="Featured Products">';
 
 			do_action( 'storefront_homepage_before_featured_products' );
 
@@ -602,7 +654,7 @@ if ( ! function_exists( 'storefront_popular_products' ) ) {
 	 */
 	function storefront_popular_products( $args ) {
 
-		if ( is_woocommerce_activated() ) {
+		if ( storefront_is_woocommerce_activated() ) {
 
 			$args = apply_filters( 'storefront_popular_products_args', array(
 				'limit'   => 4,
@@ -610,7 +662,7 @@ if ( ! function_exists( 'storefront_popular_products' ) ) {
 				'title'   => __( 'Fan Favorites', 'storefront' ),
 			) );
 
-			echo '<section class="storefront-product-section storefront-popular-products">';
+			echo '<section class="storefront-product-section storefront-popular-products" aria-label="Popular Products">';
 
 			do_action( 'storefront_homepage_before_popular_products' );
 
@@ -641,7 +693,7 @@ if ( ! function_exists( 'storefront_on_sale_products' ) ) {
 	 */
 	function storefront_on_sale_products( $args ) {
 
-		if ( is_woocommerce_activated() ) {
+		if ( storefront_is_woocommerce_activated() ) {
 
 			$args = apply_filters( 'storefront_on_sale_products_args', array(
 				'limit'   => 4,
@@ -649,7 +701,7 @@ if ( ! function_exists( 'storefront_on_sale_products' ) ) {
 				'title'   => __( 'On Sale', 'storefront' ),
 			) );
 
-			echo '<section class="storefront-product-section storefront-on-sale-products">';
+			echo '<section class="storefront-product-section storefront-on-sale-products" aria-label="On Sale Products">';
 
 			do_action( 'storefront_homepage_before_on_sale_products' );
 
@@ -679,13 +731,13 @@ if ( ! function_exists( 'storefront_best_selling_products' ) ) {
 	 * @return void
 	 */
 	function storefront_best_selling_products( $args ) {
-		if ( is_woocommerce_activated() ) {
+		if ( storefront_is_woocommerce_activated() ) {
 			$args = apply_filters( 'storefront_best_selling_products_args', array(
 				'limit'   => 4,
 				'columns' => 4,
 				'title'	  => esc_attr__( 'Best Sellers', 'storefront' ),
 			) );
-			echo '<section class="storefront-product-section storefront-best-selling-products">';
+			echo '<section class="storefront-product-section storefront-best-selling-products" aria-label="Best Selling Products">';
 			do_action( 'storefront_homepage_before_best_selling_products' );
 			echo '<h2 class="section-title">' . wp_kses_post( $args['title'] ) . '</h2>';
 			do_action( 'storefront_homepage_after_best_selling_products_title' );
@@ -756,7 +808,7 @@ if ( ! function_exists( 'storefront_post_thumbnail' ) ) {
 	 * @param string $size the post thumbnail size.
 	 * @since 1.5.0
 	 */
-	function storefront_post_thumbnail( $size ) {
+	function storefront_post_thumbnail( $size = 'full' ) {
 		if ( has_post_thumbnail() ) {
 			the_post_thumbnail( $size );
 		}
@@ -768,7 +820,7 @@ if ( ! function_exists( 'storefront_primary_navigation_wrapper' ) ) {
 	 * The primary navigation wrapper
 	 */
 	function storefront_primary_navigation_wrapper() {
-		echo '<section class="storefront-primary-navigation">';
+		echo '<div class="storefront-primary-navigation">';
 	}
 }
 
@@ -777,22 +829,26 @@ if ( ! function_exists( 'storefront_primary_navigation_wrapper_close' ) ) {
 	 * The primary navigation wrapper close
 	 */
 	function storefront_primary_navigation_wrapper_close() {
-		echo '</section>';
+		echo '</div>';
 	}
 }
 
 if ( ! function_exists( 'storefront_init_structured_data' ) ) {
 	/**
-	 * Generate the structured data...
-	 * Initialize Storefront::$structured_data via Storefront::set_structured_data()...
-	 * Hooked into:
-	 * `storefront_loop_post`
-	 * `storefront_single_post`
-	 * `storefront_page`
-	 * Apply `storefront_structured_data` filter hook for structured data customization :)
+	 * Generates structured data.
+	 *
+	 * Hooked into the following action hooks:
+	 *
+	 * - `storefront_loop_post`
+	 * - `storefront_single_post`
+	 * - `storefront_page`
+	 *
+	 * Applies `storefront_structured_data` filter hook for structured data customization :)
 	 */
 	function storefront_init_structured_data() {
-		if ( is_home() || is_category() || is_date() || is_search() || is_single() && ( is_woocommerce_activated() && ! is_woocommerce() ) ) {
+
+		// Post's structured data.
+		if ( is_home() || is_category() || is_date() || is_search() || is_single() && ( storefront_is_woocommerce_activated() && ! is_woocommerce() ) ) {
 			$image = wp_get_attachment_image_src( get_post_thumbnail_id( get_the_ID() ), 'normal' );
 			$logo  = wp_get_attachment_image_src( get_theme_mod( 'custom_logo' ), 'full' );
 
@@ -801,13 +857,6 @@ if ( ! function_exists( 'storefront_init_structured_data' ) ) {
 			$json['mainEntityOfPage'] = array(
 				'@type'                 => 'webpage',
 				'@id'                   => get_the_permalink(),
-			);
-
-			$json['image']            = array(
-				'@type'                 => 'ImageObject',
-				'url'                   => $image[0],
-				'width'                 => $image[1],
-				'height'                => $image[2],
 			);
 
 			$json['publisher']        = array(
@@ -826,11 +875,22 @@ if ( ! function_exists( 'storefront_init_structured_data' ) ) {
 				'name'                  => get_the_author(),
 			);
 
+			if ( $image ) {
+				$json['image']            = array(
+					'@type'                 => 'ImageObject',
+					'url'                   => $image[0],
+					'width'                 => $image[1],
+					'height'                => $image[2],
+				);
+			}
+
 			$json['datePublished']    = get_post_time( 'c' );
 			$json['dateModified']     = get_the_modified_date( 'c' );
 			$json['name']             = get_the_title();
-			$json['headline']         = get_the_title();
+			$json['headline']         = $json['name'];
 			$json['description']      = get_the_excerpt();
+
+		// Page's structured data.
 		} elseif ( is_page() ) {
 			$json['@type']            = 'WebPage';
 			$json['url']              = get_the_permalink();

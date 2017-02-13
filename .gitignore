@@ -6,4 +6,4 @@
 mariadb/
 *.sql
 *.env
-uploads/
+uploads/*

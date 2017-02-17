@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 
 
+=======
+
+
+>>>>>>> atualiza plugins e temas
 === WooCommerce Name Your Price ===
 
 2015.03.23 - version 2.2.0

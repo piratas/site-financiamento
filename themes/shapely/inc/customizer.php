@@ -8,409 +8,508 @@
  *
  * @param WP_Customize_Manager $wp_customize Theme Customizer object.
  */
-function shapely_customize_register($wp_customize)
-{
-    $wp_customize->get_setting('blogname')->transport = 'postMessage';
-    $wp_customize->get_setting('blogdescription')->transport = 'postMessage';
-    $wp_customize->get_setting('header_textcolor')->transport = 'postMessage';
+function shapely_customize_register( $wp_customize ) {
+	$wp_customize->get_setting( 'blogname' )->transport         = 'postMessage';
+	$wp_customize->get_setting( 'blogdescription' )->transport  = 'postMessage';
+	$wp_customize->get_setting( 'header_textcolor' )->transport = 'postMessage';
+	$wp_customize->get_setting( 'custom_logo' )->transport      = 'refresh';
+
+	// Abort if selective refresh is not available.
+	if ( ! isset( $wp_customize->selective_refresh ) ) {
+		return;
+	}
+
+	$wp_customize->selective_refresh->add_partial( 'blogname', array(
+		'selector'        => '.site-title',
+		'render_callback' => function () {
+			bloginfo( 'name' );
+		},
+	) );
+
+	$wp_customize->selective_refresh->add_partial( 'footer_callout_text', array(
+		'selector'        => '.footer-callout',
+		'render_callback' => function () {
+			shapely_footer_callout();
+		}
+	) );
+	$wp_customize->selective_refresh->add_partial( 'footer_callout_btntext', array(
+		'selector'        => '.footer-callout',
+		'render_callback' => function () {
+			shapely_footer_callout();
+		}
+	) );
+	$wp_customize->selective_refresh->add_partial( 'footer_callout_link', array(
+		'selector'        => '.footer-callout',
+		'render_callback' => function () {
+			shapely_footer_callout();
+		}
+	) );
+	$wp_customize->selective_refresh->add_partial( 'blog_name', array(
+		'selector'        => '.header-callout',
+		'render_callback' => function () {
+			shapely_top_callout();
+		}
+	) );
+	$wp_customize->selective_refresh->add_partial( 'header_textcolor', array(
+		'selector'        => '.header-callout',
+		'render_callback' => function () {
+			shapely_top_callout();
+		}
+	) );
+
 }
-add_action('customize_register', 'shapely_customize_register');
+
+add_action( 'customize_register', 'shapely_customize_register' );
 
 /**
  * Options for WordPress Theme Customizer.
  */
-function shapely_customizer($wp_customize)
-{
+function shapely_customizer( $wp_customize ) {
+	/* Main option Settings Panel */
+	$wp_customize->add_panel( 'shapely_main_options', array(
+		'capability'     => 'edit_theme_options',
+		'theme_supports' => '',
+		'title'          => esc_html__( 'Shapely Options', 'shapely' ),
+		'description'    => esc_html__( 'Panel to update shapely theme options', 'shapely' ), // Include html tags such as <p>.
+		'priority'       => 10, // Mixed with top-level-section hierarchy.
+	) );
 
-    // logo
-    $wp_customize->add_setting('header_logo', array(
-        'default' => '',
-        'transport' => 'refresh',
-        'sanitize_callback' => 'shapely_sanitize_number',
-    ));
-    $wp_customize->add_control(new WP_Customize_Media_Control($wp_customize, 'header_logo', array(
-        'label' => __('Logo', 'shapely'),
-        'section' => 'title_tagline',
-        'mime_type' => 'image',
-        'priority' => 10,
-    )));
+	// add "Sidebar" section
+	$wp_customize->add_section( 'shapely_layout_section', array(
+		'title'       => esc_html__( 'Layout options', 'shapely' ),
+		'description' => '',
+		'priority'    => 31,
+		'panel'       => 'shapely_main_options',
+	) );
 
-      /* Main option Settings Panel */
-    $wp_customize->add_panel('shapely_main_options', array(
-        'capability' => 'edit_theme_options',
-        'theme_supports' => '',
-        'title' => __('Shapely Options', 'shapely'),
-        'description' => __('Panel to update shapely theme options', 'shapely'), // Include html tags such as <p>.
-        'priority' => 10, // Mixed with top-level-section hierarchy.
-    ));
+	$wp_customize->add_section( 'shapely_blog_section', array(
+		'title'    => esc_html__( 'Blog Settings', 'shapely' ),
+		'panel'    => 'shapely_main_options',
+		'priority' => 33,
+	) );
 
-    // add "Sidebar" section
-        $wp_customize->add_section('shapely_layout_section', array(
-            'title' => __('Layout options', 'shapely'),
-            'description' => '',
-            'priority' => 31,
-            'panel' => 'shapely_main_options',
-        ));
-            // Layout options
-            global $shapely_site_layout;
-    $wp_customize->add_setting('shapely_sidebar_position', array(
-                 'default' => 'side-right',
-                 'sanitize_callback' => 'shapely_sanitize_layout',
-            ));
-    $wp_customize->add_control('shapely_sidebar_position', array(
-                 'label' => __('Website Layout Options', 'shapely'),
-                 'section' => 'shapely_layout_section',
-                 'type' => 'select',
-                 'description' => __('Choose between different layout options to be used as default', 'shapely'),
-                 'choices' => $shapely_site_layout,
-            ));
+	$wp_customize->add_setting( 'link_color', array(
+		'default'           => '',
+		'sanitize_callback' => 'sanitize_hex_color',
+	) );
+	$wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'link_color', array(
+		'label'       => esc_html__( 'Link Color', 'shapely' ),
+		'description' => esc_html__( 'Default used if no color is selected', 'shapely' ),
+		'section'     => 'shapely_layout_section',
+	) ) );
+	$wp_customize->add_setting( 'link_hover_color', array(
+		'default'           => '',
+		'sanitize_callback' => 'sanitize_hex_color',
+	) );
+	$wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'link_hover_color', array(
+		'label'       => esc_html__( 'Link Hover Color', 'shapely' ),
+		'description' => esc_html__( 'Default used if no color is selected', 'shapely' ),
+		'section'     => 'shapely_layout_section',
+	) ) );
+	$wp_customize->add_setting( 'button_color', array(
+		'default'           => '',
+		'sanitize_callback' => 'sanitize_hex_color',
+	) );
+	$wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'button_color', array(
+		'label'       => esc_html__( 'Button Color', 'shapely' ),
+		'description' => esc_html__( 'Default used if no color is selected', 'shapely' ),
+		'section'     => 'shapely_layout_section',
+	) ) );
+	$wp_customize->add_setting( 'button_hover_color', array(
+		'default'           => '',
+		'sanitize_callback' => 'sanitize_hex_color',
+	) );
+	$wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'button_hover_color', array(
+		'label'       => esc_html__( 'Button Hover Color', 'shapely' ),
+		'description' => esc_html__( 'Default used if no color is selected', 'shapely' ),
+		'section'     => 'shapely_layout_section',
+	) ) );
 
-    $wp_customize->add_setting('link_color', array(
-                    'default' => '',
-                    'sanitize_callback' => 'shapely_sanitize_hexcolor',
-                ));
-    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'link_color', array(
-                'label' => __('Link Color', 'shapely'),
-                'description' => __('Default used if no color is selected', 'shapely'),
-                'section' => 'shapely_layout_section',
-            )));
-    $wp_customize->add_setting('link_hover_color', array(
-                    'default' => '',
-                    'sanitize_callback' => 'shapely_sanitize_hexcolor',
-                ));
-    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'link_hover_color', array(
-                'label' => __('Link Hover Color', 'shapely'),
-                'description' => __('Default used if no color is selected', 'shapely'),
-                'section' => 'shapely_layout_section',
-            )));
-    $wp_customize->add_setting('button_color', array(
-                    'default' => '',
-                    'sanitize_callback' => 'shapely_sanitize_hexcolor',
-                ));
-    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'button_color', array(
-                'label' => __('Button Color', 'shapely'),
-                'description' => __('Default used if no color is selected', 'shapely'),
-                'section' => 'shapely_layout_section',
-            )));
-    $wp_customize->add_setting('button_hover_color', array(
-                    'default' => '',
-                    'sanitize_callback' => 'shapely_sanitize_hexcolor',
-                ));
-    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'button_hover_color', array(
-                'label' => __('Button Hover Color', 'shapely'),
-                'description' => __('Default used if no color is selected', 'shapely'),
-                'section' => 'shapely_layout_section',
-            )));
+	$wp_customize->add_setting( 'social_color', array(
+		'default'           => '',
+		'sanitize_callback' => 'sanitize_hex_color',
+	) );
+	$wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'social_color', array(
+		'label'       => esc_html__( 'Social Icon Color', 'shapely' ),
+		'description' => esc_html__( 'Default used if no color is selected', 'shapely' ),
+		'section'     => 'shapely_layout_section',
+	) ) );
 
-    $wp_customize->add_setting('social_color', array(
-                    'default' => '',
-                    'sanitize_callback' => 'shapely_sanitize_hexcolor',
-                ));
-    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'social_color', array(
-                'label' => __('Social Icon Color', 'shapely'),
-                'description' => __('Default used if no color is selected', 'shapely'),
-                'section' => 'shapely_layout_section',
-            )));
+	// add "Sidebar" section
+	$wp_customize->add_section( 'shapely_main_section', array(
+		'title'    => esc_html__( 'Main options', 'shapely' ),
+		'priority' => 11,
+		'panel'    => 'shapely_main_options',
+	) );
 
-        // add "Sidebar" section
-    $wp_customize->add_section('shapely_main_section', array(
-        'title' => __('Main options', 'shapely'),
-        'priority' => 11,
-        'panel' => 'shapely_main_options',
-    ));
+	$wp_customize->add_setting( 'top_callout', array(
+		'default'           => 1,
+		'sanitize_callback' => 'shapely_sanitize_checkbox',
+	) );
 
-    $wp_customize->add_setting('top_callout', array(
-        'default' => 1,
-        'sanitize_callback' => 'shapely_sanitize_checkbox',
-      ));
+	if ( class_exists( 'Epsilon_Control_Toggle' ) ) {
+		$wp_customize->add_control( new Epsilon_Control_Toggle(
+			                            $wp_customize,
+			                            'top_callout',
+			                            array(
+				                            'type'     => 'mte-toggle',
+				                            'label'    => esc_html__( 'Show title in top call out box', 'shapely' ),
+				                            'section'  => 'shapely_blog_section',
+				                            'priority' => 20
+			                            )
+		                            )
+		);
+	} else {
+		$wp_customize->add_control( 'top_callout', array(
+			'label'    => esc_html__( 'check to show title in top call out box', 'shapely' ),
+			'section'  => 'shapely_blog_section',
+			'priority' => 20,
+			'type'     => 'checkbox',
+		) );
+	}
 
-    $wp_customize->add_control('top_callout', array(
-          'label' => esc_html__('check to show title in top call out box', 'shapely'),
-          'section' => 'shapely_main_section',
-          'priority' => 20,
-          'type' => 'checkbox',
-      ));
+	$wp_customize->add_setting( 'hide_post_title', array(
+		'default'           => 0,
+		'sanitize_callback' => 'shapely_sanitize_checkbox',
+	) );
 
-    $wp_customize->add_setting('blog_name', array(
-          'default' => '',
-          'sanitize_callback' => 'shapely_sanitize_strip_slashes',
-      ));
-    $wp_customize->add_control('blog_name', array(
-          'label' => __('Blog Name in top callout', 'shapely'),
-          'description' => __('Heading for the Blog page', 'shapely'),
-          'section' => 'shapely_main_section',
-      ));
+	if ( class_exists( 'Epsilon_Control_Toggle' ) ) {
+		$wp_customize->add_control( new Epsilon_Control_Toggle(
+			                            $wp_customize,
+			                            'hide_post_title',
+			                            array(
+				                            'type'    => 'mte-toggle',
+				                            'label'   => esc_html__( 'Title in blog post', 'shapely' ),
+				                            'section' => 'wpseo_breadcrumbs_customizer_section',
+			                            )
+		                            )
+		);
+	} else {
+		$wp_customize->add_control( 'hide_post_title', array(
+			'label'   => esc_html__( 'Title in blog post', 'shapely' ),
+			'section' => 'wpseo_breadcrumbs_customizer_section',
+			'type'    => 'checkbox',
+		) );
+	}
 
-    if (post_type_exists('jetpack-portfolio')) {
-        $wp_customize->add_setting('portfolio_name', array(
-          'default' => '',
-          'sanitize_callback' => 'shapely_sanitize_strip_slashes',
-        ));
-        $wp_customize->add_control('portfolio_name', array(
-            'label' => __('Portfolio Archive Title', 'shapely'),
-            'section' => 'shapely_main_section',
-        ));
+	$wp_customize->add_setting( 'blog_name', array(
+		'default'           => '',
+		'sanitize_callback' => 'wp_kses_stripslashes',
+		'transport'         => 'postMessage'
+	) );
+	$wp_customize->add_control( 'blog_name', array(
+		'label'       => esc_html__( 'Blog Name in top callout', 'shapely' ),
+		'description' => esc_html__( 'Heading for the Blog page', 'shapely' ),
+		'section'     => 'shapely_blog_section',
+	) );
 
-        $wp_customize->add_setting('portfolio_description', array(
-          'default' => '',
-          'sanitize_callback' => 'shapely_sanitize_strip_slashes',
-        ));
-        $wp_customize->add_control('portfolio_description', array(
-            'type' => 'textarea',
-            'label' => __('Portfolio Archive Description', 'shapely'),
-            'section' => 'shapely_main_section',
-        ));
-    }
+	if ( post_type_exists( 'jetpack-portfolio' ) ) {
+		$wp_customize->add_setting( 'portfolio_name', array(
+			'default'           => '',
+			'sanitize_callback' => 'wp_kses_stripslashes',
+		) );
+		$wp_customize->add_control( 'portfolio_name', array(
+			'label'   => esc_html__( 'Portfolio Archive Title', 'shapely' ),
+			'section' => 'shapely_main_section',
+		) );
 
-    $wp_customize->add_setting('footer_callout_text', array(
-        'default' => '',
-        'sanitize_callback' => 'shapely_sanitize_strip_slashes',
-      ));
-    $wp_customize->add_control('footer_callout_text', array(
-          'label' => __('Text for footer callout', 'shapely'),
-          'description' => __('Footer Callout', 'shapely'),
-          'section' => 'shapely_main_section',
-      ));
+		$wp_customize->add_setting( 'portfolio_description', array(
+			'default'           => '',
+			'sanitize_callback' => 'wp_kses_stripslashes',
+		) );
+		$wp_customize->add_control( 'portfolio_description', array(
+			'type'    => 'textarea',
+			'label'   => esc_html__( 'Portfolio Archive Description', 'shapely' ),
+			'section' => 'shapely_main_section',
+		) );
+	}
 
-    $wp_customize->add_setting('footer_callout_btntext', array(
-        'default' => '',
-        'sanitize_callback' => 'shapely_sanitize_strip_slashes',
-      ));
-    $wp_customize->add_control('footer_callout_btntext', array(
-          'label' => __('Text for footer callout button', 'shapely'),
-          'section' => 'shapely_main_section',
-      ));
-    $wp_customize->add_setting('footer_callout_link', array(
-          'default' => '',
-          'sanitize_callback' => 'esc_url_raw',
-      ));
-    $wp_customize->add_control('footer_callout_link', array(
-          'label' => __('CFA button link', 'shapely'),
-          'section' => 'shapely_main_section',
-          'description' => __('Enter the link for Call For Action button in footer', 'shapely'),
-          'type' => 'text',
-      ));
+	$wp_customize->add_setting( 'footer_callout_text', array(
+		'default'           => '',
+		'sanitize_callback' => 'wp_kses_stripslashes',
+		'transport'         => 'postMessage'
+	) );
+	$wp_customize->add_control( 'footer_callout_text', array(
+		'label'       => esc_html__( 'Text for footer callout', 'shapely' ),
+		'description' => esc_html__( 'Footer Callout', 'shapely' ),
+		'section'     => 'shapely_main_section',
+	) );
 
-    // add "Footer" section
-    $wp_customize->add_section('shapely_footer_section', array(
-        'title' => esc_html__('Footer', 'shapely'),
-        'priority' => 90,
-    ));
+	$wp_customize->add_setting( 'footer_callout_btntext', array(
+		'default'           => '',
+		'sanitize_callback' => 'wp_kses_stripslashes',
+		'transport'         => 'postMessage'
+	) );
+	$wp_customize->add_control( 'footer_callout_btntext', array(
+		'label'   => esc_html__( 'Text for footer callout button', 'shapely' ),
+		'section' => 'shapely_main_section',
+	) );
+	$wp_customize->add_setting( 'footer_callout_link', array(
+		'default'           => '',
+		'sanitize_callback' => 'esc_url_raw',
+		'transport'         => 'postMessage'
+	) );
+	$wp_customize->add_control( 'footer_callout_link', array(
+		'label'       => esc_html__( 'CFA button link', 'shapely' ),
+		'section'     => 'shapely_main_section',
+		'description' => esc_html__( 'Enter the link for Call For Action button in footer', 'shapely' ),
+		'type'        => 'text',
+	) );
 
-    $wp_customize->add_setting('shapely_footer_copyright', array(
-        'default' => '',
-        'transport' => 'refresh',
-        'sanitize_callback' => 'shapely_sanitize_strip_slashes',
-    ));
+	// add "Footer" section
+	$wp_customize->add_section( 'shapely_footer_section', array(
+		'title'    => esc_html__( 'Footer', 'shapely' ),
+		'priority' => 90,
+	) );
 
-    $wp_customize->add_control('shapely_footer_copyright', array(
-        'type' => 'textarea',
-        'label' => 'Copyright Text',
-        'section' => 'shapely_footer_section',
-    ));
+	$wp_customize->add_setting( 'shapely_footer_copyright', array(
+		'default'           => '',
+		'transport'         => 'refresh',
+		'sanitize_callback' => 'wp_kses_stripslashes',
+	) );
 
-        /* Shapely Other Options */
-        $wp_customize->add_section('shapely_other_options', array(
-            'title' => __('Other', 'shapely'),
-            'priority' => 70,
-            'panel' => 'shapely_main_options',
-        ));
-    $wp_customize->add_setting('custom_css', array(
-                'default' => '',
-                'sanitize_callback' => 'shapely_sanitize_strip_slashes',
-            ));
-    $wp_customize->add_control('custom_css', array(
-                'label' => __('Custom CSS', 'shapely'),
-                'description' => sprintf(__('Additional CSS', 'shapely')),
-                'section' => 'shapely_other_options',
-                'type' => 'textarea',
-            ));
+	$wp_customize->add_control( 'shapely_footer_copyright', array(
+		'type'    => 'textarea',
+		'label'   => esc_html__( 'Copyright Text', 'shapely' ),
+		'section' => 'shapely_footer_section',
+	) );
 
-        /* Support & Documentation */
-        $wp_customize->add_section('shapely_important_links', array(
-        'priority' => 5,
-        'title' => __('Support and Documentation', 'shapely'),
-        ));
-    $wp_customize->add_setting('shapely[imp_links]', array(
-              'sanitize_callback' => 'esc_url_raw',
-            ));
-    $wp_customize->add_control(
-            new Shapely_Important_Links(
-            $wp_customize,
-                'shapely[imp_links]', array(
-                'section' => 'shapely_important_links',
-                'type' => 'shapely-important-links',
-            )));
+	if ( class_exists( 'Epsilon_Control_Color_Scheme' ) ) {
+		$wp_customize->add_setting( 'shapely_color_scheme',
+		                            array(
+			                            'sanitize_callback' => 'sanitize_text_field',
+			                            'default'           => 'default',
+			                            'transport'         => 'postMessage',
+		                            ) );
+
+		$wp_customize->add_control( new Epsilon_Control_Color_Scheme(
+			                            $wp_customize,
+			                            'shapely_color_scheme',
+			                            array(
+				                            'label'       => esc_html__( 'Color scheme', 'shapely' ),
+				                            'description' => esc_html__( 'Select a color scheme', 'shapely' ),
+				                            'choices'     => array(
+					                            array(
+						                            'id'     => 'purple',
+						                            'name'   => 'Default',
+						                            'colors' => array(
+							                            'accent'               => '#745cf9',
+							                            'text'                 => '#666666',
+							                            'content-widget-title' => '#0e1015',
+							                            'footer-bg'            => '#0e1015',
+							                            'footer-widget-title'  => '#ffffff',
+							                            'footer-links'         => '#ffffff'
+						                            ),
+					                            ),
+					                            array(
+						                            'id'     => 'yellow',
+						                            'name'   => 'Yellow',
+						                            'colors' => array(
+							                            'accent'               => '#FFC107',
+							                            'text'                 => '#666666',
+							                            'content-widget-title' => '#0e1015',
+							                            'footer-bg'            => '#0e1015',
+							                            'footer-widget-title'  => '#ffffff',
+							                            'footer-links'         => '#ffffff'
+						                            ),
+					                            ),
+					                            array(
+						                            'id'     => 'green',
+						                            'name'   => 'Green',
+						                            'colors' => array(
+							                            'accent'               => '#2ecc71',
+							                            'text'                 => '#666666',
+							                            'content-widget-title' => '#0e1015',
+							                            'footer-bg'            => '#0e1015',
+							                            'footer-widget-title'  => '#ffffff',
+							                            'footer-links'         => '#ffffff'
+						                            ),
+					                            ),
+				                            ),
+				                            'priority'    => 0,
+				                            'default'     => 'purple',
+				                            'section'     => 'colors',
+			                            )
+		                            )
+		);
+	}
+
+	$wp_customize->add_setting( 'first_letter_caps', array(
+		'default'           => 1,
+		'sanitize_callback' => 'shapely_sanitize_checkbox',
+	) );
+	$wp_customize->add_setting( 'tags_post_meta', array(
+		'default'           => 1,
+		'sanitize_callback' => 'shapely_sanitize_checkbox',
+	) );
+	$wp_customize->add_setting( 'related_posts_area', array(
+		'default'           => 1,
+		'sanitize_callback' => 'shapely_sanitize_checkbox',
+	) );
+	$wp_customize->add_setting( 'post_author_area', array(
+		'default'           => 1,
+		'sanitize_callback' => 'shapely_sanitize_checkbox',
+	) );
+	$wp_customize->add_setting( 'post_author_left_side', array(
+		'default'           => 0,
+		'sanitize_callback' => 'shapely_sanitize_checkbox',
+	) );
+
+
+	if ( class_exists( 'Epsilon_Control_Toggle' ) ) {
+		$wp_customize->add_control( new Epsilon_Control_Toggle(
+			                            $wp_customize,
+			                            'first_letter_caps',
+			                            array(
+				                            'type'    => 'mte-toggle',
+				                            'label'   => esc_html__( 'First Letter Caps', 'shapely' ),
+				                            'section' => 'shapely_blog_section',
+			                            )
+		                            ) );
+		$wp_customize->add_control( new Epsilon_Control_Toggle(
+			                            $wp_customize,
+			                            'tags_post_meta',
+			                            array(
+				                            'type'    => 'mte-toggle',
+				                            'label'   => esc_html__( 'Tags Post Meta', 'shapely' ),
+				                            'section' => 'shapely_blog_section',
+			                            )
+		                            ) );
+		$wp_customize->add_control( new Epsilon_Control_Toggle(
+			                            $wp_customize,
+			                            'related_posts_area',
+			                            array(
+				                            'type'    => 'mte-toggle',
+				                            'label'   => esc_html__( 'Related Posts Area', 'shapely' ),
+				                            'section' => 'shapely_blog_section',
+			                            )
+		                            ) );
+		$wp_customize->add_control( new Epsilon_Control_Toggle(
+			                            $wp_customize,
+			                            'post_author_area',
+			                            array(
+				                            'type'    => 'mte-toggle',
+				                            'label'   => esc_html__( 'Post Author Area', 'shapely' ),
+				                            'section' => 'shapely_blog_section',
+			                            )
+		                            ) );
+		$wp_customize->add_control( new Epsilon_Control_Toggle(
+			                            $wp_customize,
+			                            'post_author_left_side',
+			                            array(
+				                            'type'    => 'mte-toggle',
+				                            'label'   => esc_html__( 'Post Author Left Side', 'shapely' ),
+				                            'section' => 'shapely_blog_section',
+			                            )
+		                            ) );
+	} else {
+		$wp_customize->add_control( 'first_letter_caps', array(
+			'label'   => esc_html__( 'First Letter Caps', 'shapely' ),
+			'section' => 'shapely_blog_section',
+			'type'    => 'checkbox',
+		) );
+		$wp_customize->add_control( 'tags_post_meta', array(
+			'label'   => esc_html__( 'Tags Post Meta', 'shapely' ),
+			'section' => 'shapely_blog_section',
+			'type'    => 'checkbox',
+		) );
+		$wp_customize->add_control( 'related_posts_area', array(
+			'label'   => esc_html__( 'Related Posts Area', 'shapely' ),
+			'section' => 'shapely_blog_section',
+			'type'    => 'checkbox',
+		) );
+		$wp_customize->add_control( 'post_author_area', array(
+			'label'   => esc_html__( 'Post Author Area', 'shapely' ),
+			'section' => 'shapely_blog_section',
+			'type'    => 'checkbox',
+		) );
+		$wp_customize->add_control( 'post_author_left_side', array(
+			'label'   => esc_html__( 'Post Author Left Side', 'shapely' ),
+			'section' => 'shapely_blog_section',
+			'type'    => 'checkbox',
+		) );
+	}
+
+	$wp_customize->add_setting( 'blog_layout_view', array(
+		'default'           => 'grid',
+		'sanitize_callback' => 'wp_kses_stripslashes',
+	) );
+
+	$wp_customize->add_control( 'blog_layout_view', array(
+		'label'   => esc_html__( 'Blog Layout', 'shapely' ),
+		'section' => 'shapely_blog_section',
+		'type'    => 'select',
+		'choices' => array(
+			'grid'             => esc_html__( 'Grid only', 'shapely' ),
+			'large_image_grid' => esc_html__( 'Large Image and Grid', 'shapely' ),
+			'large_image'      => esc_html__( 'Large Images', 'shapely' )
+		)
+	) );
+
+	$wp_customize->add_setting( 'blog_layout_template', array(
+		'default'           => 'sidebar-right',
+		'sanitize_callback' => 'wp_kses_stripslashes',
+	) );
+
+	$wp_customize->add_control( 'blog_layout_template', array(
+		'label'   => esc_html__( 'Blog Template', 'shapely' ),
+		'section' => 'shapely_blog_section',
+		'type'    => 'select',
+		'choices' => array(
+			'full-width'    => esc_html__( 'Full Width', 'shapely' ),
+			'no-sidebar'    => esc_html__( 'No Sidebar', 'shapely' ),
+			'sidebar-left'  => esc_html__( 'Sidebar Left', 'shapely' ),
+			'sidebar-right' => esc_html__( 'Sidebar Right', 'shapely' )
+		)
+	) );
 }
-add_action('customize_register', 'shapely_customizer');
+
+add_action( 'customize_register', 'shapely_customizer' );
 
 /**
- * Adds sanitization callback function: Strip Slashes.
+ * Sanitize checkbox for WordPress customizer.
  */
-function shapely_sanitize_strip_slashes($input)
-{
-    return wp_kses_stripslashes($input);
+function shapely_sanitize_checkbox( $input ) {
+	if ( $input == 1 ) {
+		return true;
+	} else {
+		return false;
+	}
 }
 
-/**
- * Sanitzie checkbox for WordPress customizer.
- */
-function shapely_sanitize_checkbox($input)
-{
-    if ($input == 1) {
-        return 1;
-    } else {
-        return '';
-    }
-}
 /**
  * Adds sanitization callback function: Sidebar Layout.
  */
-function shapely_sanitize_layout($input)
-{
-    global $shapely_site_layout;
-    if (array_key_exists($input, $shapely_site_layout)) {
-        return $input;
-    } else {
-        return '';
-    }
-}
+function shapely_sanitize_layout( $input ) {
+	$shapely_site_layout = array(
+		'pull-right' => esc_html__( 'Left Sidebar', 'shapely' ),
+		'side-right' => esc_html__( 'Right Sidebar', 'shapely' ),
+		'no-sidebar' => esc_html__( 'No Sidebar', 'shapely' ),
+		'full-width' => esc_html__( 'Full Width', 'shapely' )
+	);
 
-/**
- * Adds sanitization callback function: colors.
- */
-function shapely_sanitize_hexcolor($color)
-{
-    if ($unhashed = sanitize_hex_color_no_hash($color)) {
-        return '#'.$unhashed;
-    }
-
-    return $color;
+	if ( array_key_exists( $input, $shapely_site_layout ) ) {
+		return $input;
+	} else {
+		return '';
+	}
 }
-
-/**
- * Adds sanitization callback function: Slider Category.
- */
-function shapely_sanitize_slidecat($input)
-{
-    if (array_key_exists($input, shapely_cats())) {
-        return $input;
-    } else {
-        return '';
-    }
-}
-
-/**
- * Adds sanitization callback function: Radio Header.
- */
-function shapely_sanitize_radio_header($input)
-{
-    global $header_show;
-    if (array_key_exists($input, $header_show)) {
-        return $input;
-    } else {
-        return '';
-    }
-}
-
-/**
- * Adds sanitization callback function: Number.
- */
-function shapely_sanitize_number($input)
-{
-    if (isset($input) && is_numeric($input)) {
-        return $input;
-    }
-}
-
-/**
- * Binds JS handlers to make Theme Customizer preview reload changes asynchronously.
- */
-function shapely_customize_preview_js()
-{
-    wp_enqueue_script('shapely_customizer', get_template_directory_uri().'/js/customizer.js', array('customize-preview'), '20130508', true);
-}
-add_action('customize_preview_init', 'shapely_customize_preview_js');
 
 /**
  * Add CSS for custom controls.
  */
-function shapely_customizer_custom_control_css()
-{
-    ?>
-    <style>
-        #customize-control-shapely-main_body_typography-size select, #customize-control-shapely-main_body_typography-face select,#customize-control-shapely-main_body_typography-style select { width: 60%; }
-    </style><?php
+function shapely_customizer_custom_control_css() {
+	?>
+	<style>
+		#customize-control-shapely-main_body_typography-size select, #customize-control-shapely-main_body_typography-face select, #customize-control-shapely-main_body_typography-style select {
+			width: 60%;
+		}
+	</style><?php
 
 }
-add_action('customize_controls_print_styles', 'shapely_customizer_custom_control_css');
 
-if (!class_exists('WP_Customize_Control')) {
-    return;
-}
-/**
- * Class to create a Shapely important links.
- */
-class Shapely_Important_Links extends WP_Customize_Control
-{
-    public $type = 'shapely-important-links';
+add_action( 'customize_controls_print_styles', 'shapely_customizer_custom_control_css' );
 
-    public function render_content()
-    {
-        ?>
-        <!-- Twitter -->
-        <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-
-        <!-- Facebook -->
-        <div id="fb-root"></div>
-        <div id="fb-root"></div>
-        <script>
-            (function(d, s, id) {
-            var js, fjs = d.getElementsByTagName(s)[0];
-            if (d.getElementById(id)) return;
-            js = d.createElement(s); js.id = id;
-            js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=328285627269392";
-            fjs.parentNode.insertBefore(js, fjs);
-            }(document, 'script', 'facebook-jssdk'));
-        </script>
-
-        <div class="inside">
-            <div id="social-share">
-              <div class="fb-like" data-href="https://www.facebook.com/colorlib" data-send="false" data-layout="button_count" data-width="90" data-show-faces="true"></div>
-              <div class="tw-follow" ><a href="https://twitter.com/colorlib" class="twitter-follow-button" data-show-count="false">Follow @colorlib</a></div>
-            </div>
-            <p><b><a href="http://colorlib.com/wp/support/shapely"><?php _e('Shapely Documentation', 'shapely');
-        ?></a></b></p>
-            <p><?php _e('The best way to contact us with <b>support questions</b> and <b>bug reports</b> is via', 'shapely') ?> <a href="http://colorlib.com/wp/forums"><?php _e('Colorlib support forum', 'shapely') ?></a>.</p>
-            <p><?php _e('If you like this theme, I\'d appreciate any of the following:', 'shapely') ?></p>
-            <ul>
-                <li><a class="button" href="http://wordpress.org/support/view/theme-reviews/shapely?filter=5" title="<?php esc_attr_e('Rate this Theme', 'shapely');
-        ?>" target="_blank"><?php printf(__('Rate this Theme', 'shapely'));
-        ?></a></li>
-                <li><a class="button" href="http://www.facebook.com/colorlib" title="Like Colorlib on Facebook" target="_blank"><?php printf(__('Like on Facebook', 'shapely'));
-        ?></a></li>
-                <li><a class="button" href="http://twitter.com/colorlib/" title="Follow Colrolib on Twitter" target="_blank"><?php printf(__('Follow on Twitter', 'shapely'));
-        ?></a></li>
-            </ul>
-        </div><?php
-
-    }
-}
-
-/*
- * Custom Scripts
- */
-add_action('customize_controls_print_footer_scripts', 'customizer_custom_scripts');
-
-function customizer_custom_scripts()
-{
-    ?>
-<style>
-    li#accordion-section-shapely_important_links h3.accordion-section-title, li#accordion-section-shapely_important_links h3.accordion-section-title:focus { background-color: #00cc00 !important; color: #fff !important; }
-    li#accordion-section-shapely_important_links h3.accordion-section-title:hover { background-color: #00b200 !important; color: #fff !important; }
-    li#accordion-section-shapely_important_links h3.accordion-section-title:after { color: #fff !important; }
-    #TB_window{ z-index: 999999!important; }
-</style>
-<?php
-
+if ( ! class_exists( 'WP_Customize_Control' ) ) {
+	return;
 }

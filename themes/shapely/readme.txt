@@ -1,18 +1,18 @@
 /*========= About Theme =========*/
 
 Theme Name: Shapely
-Theme URI: http://colorlib.com/wp/shapely/
-Version: 1.0.2
-Tested up to: WP 4.5
+Theme URI: https://colorlib.com/wp/shapely/
+Version: 1.1.0
+Tested up to: WP 4.7
 
 Author: Aigars Silkalns
-Author URI: http://colorlib.com/wp/
+Author URI: https://colorlib.com/wp/
 License: GNU General Public License v3.0
 License URI: http://www.gnu.org/licenses/gpl.html
 -------------------------------------------------------
-Sparkling theme, Copyright 2014-2016 colorlib.com
-Sparkling WordPress theme is distributed under the terms of the GNU GPL
-Sparkling is based on Underscores http://underscores.me/, (C) 2012-2016 Automattic, Inc.
+Shapely theme, Copyright 2017 colorlib.com
+Shapely WordPress theme is distributed under the terms of the GNU GPL
+Shapely is based on Underscores http://underscores.me/, (C) 2012-2017 Automattic, Inc.
 -------------------------------------------------------
 
 == Description ==
@@ -37,14 +37,22 @@ For more detailed Shapely theme setup please read documentation: https://colorli
 
 Shapely includes support for Infinite Scroll, Portfolio, Testimonials, Tiled Galleries for Jetpack.
 
+= Long menus =
+
+Shapely theme does not support long menus.
+
+= Front page template not displaying content =
+
+This page template is used to create the Parallax homepage from our demo : https://colorlib.com/shapely/ . it does not output any content added in the backend editor and we recommend using only the [Shapely] tagged widgets. 
 
 == Credits ==
 
-* Based on Underscores http://underscores.me/, (C) 2012-2016 Automattic, Inc., [GPLv2 or later](https://www.gnu.org/licenses/gpl-2.0.html)
-* normalize.css http://necolas.github.io/normalize.css/, (C) 2012-2016 Nicolas Gallagher and Jonathan Neal, [MIT](http://opensource.org/licenses/MIT)
+* Based on Underscores http://underscores.me/, (C) 2012-2017 Automattic, Inc., [GPLv2 or later](https://www.gnu.org/licenses/gpl-2.0.html)
+* normalize.css http://necolas.github.io/normalize.css/, (C) 2012-2017 Nicolas Gallagher and Jonathan Neal, [MIT](http://opensource.org/licenses/MIT)
 * TGM Plugin Activation - http://tgmpluginactivation.com/, 2011, Thomas Griffin [GPLv2 or later](https://www.gnu.org/licenses/gpl-2.0.html)
 * Bootstrap v3.3.6 (http://getbootstrap.com), Copyright 2011-2014 Twitter, Inc. Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
-* Font Awesome: License: SIL OFL 1.1, http://scripts.sil.org/OFL
+* Font Awesome 4.5.0 by @davegandy - http://fontawesome.io - @fontawesome
+	License - http://fontawesome.io/license (Font: SIL OFL 1.1, CSS: MIT License)
 * WP-Bootstrap-NavWalker licensed under the GPLv2 license (http://www.gnu.org/licenses/gpl-2.0.html)
 * FlexSlider by WooThemes licensed under the GPLv2 license (http://www.gnu.org/licenses/gpl-2.0.html)
 * jQuery Smooth Scroll, https://github.com/kswedberg/jquery-smooth-scroll. Copyright (c) 2015 Karl Swedberg. Licensed MIT(https://github.com/kswedberg/jquery-smooth-scroll/blob/master/LICENSE-MIT)
@@ -53,10 +61,26 @@ Shapely includes support for Infinite Scroll, Portfolio, Testimonials, Tiled Gal
 
 == Changelog ==
 
+= 1.1.0 - Jan 3 2017 =
+
+* Major upgrade to comply with WordPress.org guidelines and best practices.
+
+= 1.0.5 - Sept 3 2016 =
+
+* Improved theme translation
+
+= 1.0.4 - Sept 3 2016 =
+
+* Removed deprecated tags
+
+= 1.0.3 - Sept 3 2016 =
+
+* Small bug fixes and improvements
+
 = 1.0.2 - April 15 2016 =
 
 * Fixed parse error for older version of PHP.
-* Fixed error when mobile menu was appearing along regular menu between 990px - 991px. 
+* Fixed error when mobile menu was appearing along regular menu between 990px - 991px.
 
 = 1.0.1 - March 30 2016 =
 

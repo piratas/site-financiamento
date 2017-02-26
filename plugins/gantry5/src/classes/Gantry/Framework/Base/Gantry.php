@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -15,9 +15,9 @@ namespace Gantry\Framework\Base;
 
 use Gantry\Component\Config\Config;
 use Gantry\Component\System\Messages;
+use Gantry\Framework\Document;
 use Gantry\Framework\Menu;
 use Gantry\Framework\Outlines;
-use Gantry\Framework\Document as RealDocument;
 use Gantry\Framework\Page;
 use Gantry\Framework\Platform;
 use Gantry\Framework\Positions;
@@ -29,7 +29,6 @@ use Gantry\Framework\Translator;
 use RocketTheme\Toolbox\DI\Container;
 use RocketTheme\Toolbox\Event\Event;
 use RocketTheme\Toolbox\Event\EventDispatcher;
-use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
 
 abstract class Gantry extends Container
 {
@@ -168,6 +167,9 @@ abstract class Gantry extends Container
 
         $path = implode('/', array_filter(func_get_args(), function($var) { return isset($var) && $var !== ''; }));
 
+        // urlencode() the whole path, but keep the slashes.
+        $path = preg_replace(['|%2F|', '|%25|'], ['/', '%'], urlencode($path));
+
         return preg_replace('|/+|', '/', '/' . $this->offsetGet('base_url') . sprintf($route, $path));
     }
 
@@ -232,7 +234,7 @@ abstract class Gantry extends Container
         };
 
         $instance['document'] = function () {
-            return new RealDocument;
+            return new Document;
         };
 
         // Make sure that nobody modifies the original collection by making it a factory.

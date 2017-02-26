@@ -3,8 +3,8 @@ Contributors: gantry
 Author URI: http://gantry.org
 Tags: gantry, gantry5, framework, template, theme, yaml, twig, timber, scss, html5, css3, bourbon, layout, builder, widgets, flexible, extensible, configurable, flex, grid, columns, powerful, buddypress, woocommerce, bbpress
 Requires at least: 4.2+
-Tested up to: 4.6.1
-Stable tag: 5.3.9
+Tested up to: 4.7.2
+Stable tag: 5.4.8
 
 Gantry is a comprehensive set of building blocks to enable the rapid development and realization of a design into a flexible and powerful web platform
 
@@ -12,7 +12,7 @@ Gantry is a comprehensive set of building blocks to enable the rapid development
 
 Gantry 5 is a comprehensive set of building blocks to enable the rapid development and realization of a design into a flexible and powerful web platform theme.
 
-* Please visit http://gantry.org to download a FREE WordPress Gantry 5 default theme which can be used as a base for your own themes!
+> Please visit http://gantry.org to download a FREE WordPress Gantry 5 default theme which can be used as a base for your own themes!
 
 Gantry 5 is packed full of features created to empower the development of designs into fully functional layouts with the absolute minimum effort and fuss.
 
@@ -24,7 +24,7 @@ Gantry 5 uses the **Nucleus** grid system, built from scratch using Flexbox and 
 
 = Cross-platform Support =
 
-The new responsive Gantry 5 framework is available for **WordPress 4.2+**, **Joomla 3.4+** and **Grav 1.0+**.
+The new responsive Gantry 5 framework is available for **WordPress 4.2+**, **Joomla 3.4+** and **Grav 1.1+**.
 
 = Intuitive YAML-driven Configuration =
 

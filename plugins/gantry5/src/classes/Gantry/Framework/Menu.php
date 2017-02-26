@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   GNU/GPLv2 and later
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
@@ -11,7 +11,6 @@
 namespace Gantry\Framework;
 
 use Gantry\Component\Config\Config;
-use Gantry\Component\Gantry\GantryTrait;
 use Gantry\Component\Menu\AbstractMenu;
 use Gantry\Component\Menu\Item;
 
@@ -158,6 +157,18 @@ class Menu extends AbstractMenu
     public function isActive($item)
     {
         return isset($this->active[$item->id]);
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getCacheId()
+    {
+        if (is_user_logged_in()) {
+            return null;
+        }
+
+        return $this->current ?: 0;
     }
 
     public function isCurrent($item)

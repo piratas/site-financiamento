@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -13,7 +13,7 @@
 
 namespace Gantry\Admin\Controller\Json;
 
-use Gantry\Component\Controller\JsonController;
+use Gantry\Component\Admin\JsonController;
 use Gantry\Component\Response\JsonResponse;
 
 class Icons extends JsonController
@@ -22,7 +22,7 @@ class Icons extends JsonController
     {
         $response = [];
 
-        // Font Awesome Icons list [v4.6.3 - 730 icons]
+        // Font Awesome Icons list [v4.7.0 - 730 icons]
         // NOTE: To get an updated list of icons:
         //       1. Go to: http://fontawesome.io/icons/
         //       2. Open Console in Deveveloper Tools
@@ -39,7 +39,7 @@ class Icons extends JsonController
         $list = array_unique($list);
         sort($list);
 
-        $response['html'] = $this->container['admin.theme']->render('@gantry-admin/ajax/icons.html.twig', ['icons' => $list, 'options' => $options, 'total' => count($list)]);
+        $response['html'] = $this->render('@gantry-admin/ajax/icons.html.twig', ['icons' => $list, 'options' => $options, 'total' => count($list)]);
 
         return new JsonResponse($response);
     }

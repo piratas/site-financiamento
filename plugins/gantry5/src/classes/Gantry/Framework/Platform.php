@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   GNU/GPLv2 and later
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
@@ -26,12 +26,13 @@ use RocketTheme\Toolbox\DI\Container;
 class Platform extends BasePlatform
 {
     protected $name = 'wordpress';
+    protected $features = ['widgets' => true];
     protected $file = 'gantry5/gantry5.php';
 
     public function __construct(Container $container)
     {
         $this->content_dir = Folder::getRelativePath(WP_CONTENT_DIR);
-        $this->includes_dir = Folder::getRelativePath(WPINC);
+        $this->includes_dir = Folder::getRelativePath(ABSPATH . WPINC);
         $this->upload_dir = Folder::getRelativePath(wp_upload_dir()['basedir']);
         $this->gantry_dir = Folder::getRelativePath(GANTRY5_PATH);
         $this->multisite = get_current_blog_id() !== 1 ? '/blog-' . get_current_blog_id() : '';
@@ -52,6 +53,33 @@ class Platform extends BasePlatform
 
     public function init()
     {
+        // Support linked sample data.
+        $theme = isset($this->container['theme.name']) ? $this->container['theme.name'] : null;
+        if ($theme && is_dir(WP_CONTENT_DIR . "/gantry5/{$theme}/media-shared")) {
+            $custom = WP_CONTENT_DIR . "/gantry5/{$theme}/custom";
+            if (!is_dir($custom)) {
+                // First run -- copy configuration into a single location.
+                $shared = WP_CONTENT_DIR . "/gantry5/{$theme}/theme-shared";
+                $demo = WP_CONTENT_DIR . "/gantry5/{$theme}/theme-demo";
+
+                try {
+                    Folder::create($custom);
+                } catch (\Exception $e) {
+                    throw new \RuntimeException(sprintf("Failed to create folder '%s'.", $custom), 500, $e);
+                }
+
+                if (is_dir("{$shared}/custom/config")) {
+                    Folder::copy("{$shared}/custom/config", "{$custom}/config");
+                }
+                if (is_dir("{$demo}/custom/config")) {
+                    Folder::copy("{$demo}/custom/config", "{$custom}/config");
+                }
+            }
+            array_unshift($this->items['streams']['gantry-theme']['prefixes'][''], "wp-content://gantry5/{$theme}/theme-shared");
+            array_unshift($this->items['streams']['gantry-theme']['prefixes'][''], "wp-content://gantry5/{$theme}/theme-demo");
+            array_unshift($this->items['streams']['gantry-theme']['prefixes'][''], "wp-content://gantry5/{$theme}/custom");
+        }
+
         if ($this->multisite) {
             $theme = $this->get('streams.gantry-theme.prefixes..0');
             if ($theme) {
@@ -77,6 +105,13 @@ class Platform extends BasePlatform
     public function getMediaPaths()
     {
         $paths = [$this->upload_dir];
+
+        // Support linked sample data.
+        $theme = isset($this->container['theme.name']) ? $this->container['theme.name'] : null;
+        if ($theme && is_dir(WP_CONTENT_DIR . "/gantry5/{$theme}/media-shared")) {
+            array_unshift($paths, "wp-content://gantry5/{$theme}/media-shared");
+            array_unshift($paths, "wp-content://gantry5/{$theme}/media-demo");
+        }
 
         if ($this->container['global']->get('use_media_folder', false)) {
             array_push($paths, 'gantry-theme://images');
@@ -156,7 +191,7 @@ class Platform extends BasePlatform
 
     public function settings()
     {
-        return admin_url('plugins.php?page=g5-settings');
+        return admin_url('options-general.php?page=g5-settings');
     }
 
     public function update()

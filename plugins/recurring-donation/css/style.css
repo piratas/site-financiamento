@@ -1,0 +1,72 @@
+/* Donate Plugin Styles */
+#tabs.dntplgn_form_wrapper {
+    border-radius: 0;
+    padding: 0;
+}
+#tabs.dntplgn_form_wrapper > ul {
+    background: none repeat scroll 0 0 transparent;
+    border: 0 none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+#tabs.dntplgn_form_wrapper > ul li {
+    border: 0 none;
+    margin: 0;
+    text-align: center;
+    text-transform: uppercase;
+    width: 50%;
+}
+#tabs.dntplgn_form_wrapper > ul li a {
+    margin: 0;
+    outline: medium none;
+    /*width: 85%;*/
+    width: 100%;
+}
+#tabs.dntplgn_form_wrapper .dntplgn_donate_monthly > label {
+    font-size: 14px;
+}
+#tabs.dntplgn_form_wrapper .dntplgn_donate_monthly > label span {
+    color: gray;
+}
+.dntplgn_donate_monthly .dntplgn_monthly_other_sum.checked {
+    display: block !important;
+}
+.dntplgn_monthly_other_sum {
+    float: right;
+    margin-top: 1%;
+    width: 30%;
+}
+#tabs-1 .dntplgn_donate_monthly > input#dntplgn_submit_button {
+    float: left;
+    margin-top: 5%;
+}
+#tabs-2 .dntplgn_donate_monthly > input#dntplgn_submit_button {
+    float: right;
+    margin-top: 1%;
+}
+#tabs-2 .dntplgn_donate_monthly input#dntplgn_once_amount {
+    float: left;
+    margin-top: 2%;
+    width: 50%;
+}
+.widget-area #dntplgn_monthly_other_sum {
+    width: 100%;
+}
+.widget-area #tabs-2 input#dntplgn_once_amount {
+    margin-bottom: 15%;
+}
+.widget-area #tabs.dntplgn_form_wrapper > ul li {
+    white-space: normal;
+}
+.widget-area #tabs.dntplgn_form_wrapper > ul li a {
+    font-size: 14px;
+    min-height: 60px;
+    padding: 0;
+}
+span.dntplgn_error_message {
+    color: red;
+}
+.clear {
+    clear: both;
+}

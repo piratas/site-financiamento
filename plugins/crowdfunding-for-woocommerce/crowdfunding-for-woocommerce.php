@@ -2,8 +2,8 @@
 /*
 Plugin Name: Crowdfunding for WooCommerce
 Plugin URI: http://coder.fm/item/crowdfunding-for-woocommerce-plugin/
-Description: Crowdfunding Products for WooCommerce.
-Version: 2.3.1
+Description: Crowdfunding products for WooCommerce.
+Version: 2.3.4
 Author: Algoritmika Ltd
 Author URI: http://www.algoritmika.com
 Text Domain: crowdfunding-for-woocommerce
@@ -23,12 +23,14 @@ if (
 	! ( is_multisite() && array_key_exists( $plugin, get_site_option( 'active_sitewide_plugins', array() ) ) )
 ) return;
 
-// Check if Pro is active, if so then return
-$plugin = 'crowdfunding-for-woocommerce-pro/crowdfunding-for-woocommerce-pro.php';
-if (
-	in_array( $plugin, apply_filters( 'active_plugins', get_option( 'active_plugins', array() ) ) ) ||
-	( is_multisite() && array_key_exists( $plugin, get_site_option( 'active_sitewide_plugins', array() ) ) )
-) return;
+if ( 'crowdfunding-for-woocommerce.php' === basename( __FILE__ ) ) {
+	// Check if Pro is active, if so then return
+	$plugin = 'crowdfunding-for-woocommerce-pro/crowdfunding-for-woocommerce-pro.php';
+	if (
+		in_array( $plugin, apply_filters( 'active_plugins', get_option( 'active_plugins', array() ) ) ) ||
+		( is_multisite() && array_key_exists( $plugin, get_site_option( 'active_sitewide_plugins', array() ) ) )
+	) return;
+}
 
 if ( ! class_exists( 'Alg_Woocommerce_Crowdfunding' ) ) :
 
@@ -36,7 +38,7 @@ if ( ! class_exists( 'Alg_Woocommerce_Crowdfunding' ) ) :
  * Main Alg_Woocommerce_Crowdfunding Class
  *
  * @class   Alg_Woocommerce_Crowdfunding
- * @version 2.3.0
+ * @version 2.3.3
  */
 
 final class Alg_Woocommerce_Crowdfunding {
@@ -47,7 +49,7 @@ final class Alg_Woocommerce_Crowdfunding {
 	 * @var   string
 	 * @since 2.3.0
 	 */
-	public $version = '2.3.1';
+	public $version = '2.3.4';
 
 	/**
 	 * @var Alg_Woocommerce_Crowdfunding The single instance of the class
@@ -71,17 +73,16 @@ final class Alg_Woocommerce_Crowdfunding {
 	/**
 	 * Alg_Woocommerce_Crowdfunding Constructor.
 	 *
-	 * @version 2.3.0
+	 * @version 2.3.3
 	 * @access  public
 	 */
 	public function __construct() {
 
-		add_filter( 'alg_crowdfunding_option', array( $this, 'crowdfunding_option' ) );
+		// Set up localisation
+		load_plugin_textdomain( 'crowdfunding-for-woocommerce', false, dirname( plugin_basename( __FILE__ ) ) . '/langs/' );
 
 		// Include required files
 		$this->includes();
-
-		add_action( 'init', array( $this, 'init' ), 0 );
 
 		// Settings & Scripts
 		if ( is_admin() ) {
@@ -108,32 +109,22 @@ final class Alg_Woocommerce_Crowdfunding {
 	}
 
 	/**
-	 * crowdfunding_option.
-	 *
-	 * @version 2.0.0
-	 * @since   2.0.0
-	 */
-	public function crowdfunding_option( $option ) {
-		return $option;
-	}
-
-	/**
 	 * enqueue_scripts.
 	 *
-	 * @version 2.3.0
+	 * @version 2.3.2
 	 * @since   1.2.0
 	 */
 	public function enqueue_scripts() {
-		wp_enqueue_script( 'alg-variations', $this->plugin_url() . '/includes/js/alg-variations-frontend.js', array( 'jquery' ) );
+		wp_enqueue_script( 'alg-variations',      $this->plugin_url() . '/includes/js/alg-variations-frontend.js', array( 'jquery' ), $this->version );
 
-		wp_enqueue_script( 'alg-progress-bar-src', $this->plugin_url() . '/includes/js/progressbar.min.js', array( 'jquery' ) );
-		wp_enqueue_script( 'alg-progress-bar',     $this->plugin_url() . '/includes/js/alg-progressbar.js', array( 'jquery' ) );
+		wp_enqueue_script( 'alg-progress-bar-src', $this->plugin_url() . '/includes/js/progressbar.min.js',        array( 'jquery' ), $this->version );
+		wp_enqueue_script( 'alg-progress-bar',     $this->plugin_url() . '/includes/js/alg-progressbar.js',        array( 'jquery' ), $this->version );
 	}
 
 	/**
 	 * register_admin_scripts.
 	 *
-	 * @version 1.2.0
+	 * @version 2.3.2
 	 * @since   1.1.0
 	 */
 	public function register_admin_scripts() {
@@ -141,7 +132,7 @@ final class Alg_Woocommerce_Crowdfunding {
 			'jquery-ui-timepicker',
 			$this->plugin_url() . '/includes/js/jquery.timepicker.min.js',
 			array( 'jquery' ),
-			false,
+			$this->version,
 			true
 		);
 	}
@@ -149,16 +140,16 @@ final class Alg_Woocommerce_Crowdfunding {
 	/**
 	 * enqueue_admin_scripts.
 	 *
-	 * @version 1.2.0
+	 * @version 2.3.3
 	 */
 	public function enqueue_admin_scripts() {
-		wp_enqueue_script( 'jquery-ui-datepicker' );
+		wp_enqueue_script( 'jquery-ui-datepicker', false,                                                                            array(),           $this->version );
 		wp_enqueue_script( 'jquery-ui-timepicker' );
-		wp_enqueue_script( 'alg-datepicker', $this->plugin_url() . '/includes/js/alg-datepicker.js' );
-//		wp_enqueue_style( 'jquery-ui-css', '//ajax.googleapis.com/ajax/libs/jqueryui/1.8.2/themes/smoothness/jquery-ui.css' );
-		wp_enqueue_style( 'jquery-ui-css', '//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css' );
-		wp_enqueue_style( 'alg-timepicker', $this->plugin_url() . '/includes/css/jquery.timepicker.min.css' );
-		wp_enqueue_script( 'jquery-ui-dialog' );
+		wp_enqueue_script( 'alg-datepicker',       $this->plugin_url() . '/includes/js/alg-datepicker.js',                           array( 'jquery' ), $this->version, true );
+//		wp_enqueue_style( 'jquery-ui-css',         '//ajax.googleapis.com/ajax/libs/jqueryui/1.8.2/themes/smoothness/jquery-ui.css', array(),           $this->version );
+		wp_enqueue_style( 'jquery-ui-css',         '//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css',                    array(),           $this->version );
+		wp_enqueue_style( 'alg-timepicker',        $this->plugin_url() . '/includes/css/jquery.timepicker.min.css',                  array(),           $this->version );
+		wp_enqueue_script( 'jquery-ui-dialog',     false,                                                                            array(),           $this->version );
 	}
 
 	/**
@@ -180,7 +171,7 @@ final class Alg_Woocommerce_Crowdfunding {
 	 *
 	 * @version     2.2.2
 	 * @since       2.2.2
-	 * @depreciated 2.3.0
+	 * @deprecated  2.3.0
 	 * @return      bool
 	 */
 	/* function alg_is_user_role( $user_role, $user_id = 0 ) {
@@ -229,16 +220,6 @@ final class Alg_Woocommerce_Crowdfunding {
 	public function add_woocommerce_settings_tab( $settings ) {
 		$settings[] = include( 'includes/admin/class-wc-settings-crowdfunding.php' );
 		return $settings;
-	}
-
-	/**
-	 * Init Alg_Woocommerce_Crowdfunding when WordPress initialises.
-	 *
-	 * @version 2.2.2
-	 */
-	public function init() {
-		// Set up localisation
-		load_plugin_textdomain( 'crowdfunding-for-woocommerce', false, dirname( plugin_basename( __FILE__ ) ) . '/langs/' );
 	}
 
 	/**

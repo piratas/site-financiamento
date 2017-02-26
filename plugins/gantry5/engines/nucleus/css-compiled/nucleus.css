@@ -489,14 +489,6 @@ button, input[type="submit"] { cursor: pointer; user-select: none; vertical-alig
 
 .hidden { display: none; visibility: hidden; }
 
-.visible-phone { display: none !important; }
-
-.visible-tablet { display: none !important; }
-
-.hidden-desktop { display: none !important; }
-
-.visible-desktop { display: inherit !important; }
-
 @media print { .visible-print { display: inherit !important; }
   .g-block.visible-print { display: block !important; }
   .hidden-print { display: none !important; } }

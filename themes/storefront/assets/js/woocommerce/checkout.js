@@ -6,6 +6,10 @@ jQuery( window ).load( function() {
 	 * Make the order review element stick to the top of the browser window.
 	 */
 	function stickyPayment() {
+		if ( ! jQuery( '#order_review_heading' ).length || ! jQuery( 'form.woocommerce-checkout' ).length || ! jQuery( '#customer_details' ).length ) {
+			return;
+		}
+
 		var topDistance 		= jQuery( document ).scrollTop();
 		var paymentWidth		= jQuery( '#order_review_heading' ).outerWidth();
 		var	checkoutWidth		= jQuery( 'form.woocommerce-checkout' ).outerWidth();
@@ -20,10 +24,17 @@ jQuery( window ).load( function() {
 			// When we reach the order review element during scroll...
 		   	if ( topDistance > checkoutPosition.top ) {
 				jQuery( '#order_review' ).addClass( 'payment-fixed' );
-				jQuery( '#order_review' ).css({
-					'margin-left':		paymentOffset,
-					'width':			paymentWidth
-				});
+				if ( jQuery( '#order_review' ).css( 'direction' ) === 'rtl' ) {
+					jQuery( '#order_review' ).css({
+						'margin-right':		paymentOffset,
+						'width':			paymentWidth
+					});
+				} else {
+					jQuery( '#order_review' ).css({
+						'margin-left':		paymentOffset,
+						'width':			paymentWidth
+					});
+				}
 		   	} else {
 				jQuery( '#order_review' ).removeAttr( 'style' ).removeClass( 'payment-fixed' );
 		   	}

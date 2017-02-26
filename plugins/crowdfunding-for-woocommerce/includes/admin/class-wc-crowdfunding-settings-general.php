@@ -2,7 +2,7 @@
 /**
  * Crowdfunding for WooCommerce - General Section Settings
  *
- * @version 2.3.1
+ * @version 2.3.2
  * @since   1.0.0
  * @author  Algoritmika Ltd.
  */
@@ -42,7 +42,7 @@ class Alg_WC_Crowdfunding_Settings_General {
 	/**
 	 * get_settings.
 	 *
-	 * @version 2.3.1
+	 * @version 2.3.2
 	 * @since   1.0.0
 	 */
 	function get_settings() {
@@ -143,7 +143,7 @@ class Alg_WC_Crowdfunding_Settings_General {
 			),
 			array(
 				'title'     => __( 'Message on Product Not Yet Started', 'crowdfunding-for-woocommerce' ),
-//				'desc_tip'  => __( 'You can change this in product edit on per product basis', 'crowdfunding-for-woocommerce' ),
+				'desc'      => sprintf( __( 'You can use shortcodes here. For example: %s.', 'crowdfunding-for-woocommerce' ), '[product_crowdfunding_time_to_start]' ),
 				'id'        => 'alg_woocommerce_crowdfunding_message_not_started',
 				'default'   => __( '<strong>Not yet started!</strong>', 'crowdfunding-for-woocommerce' ),
 				'type'      => 'textarea',
@@ -151,7 +151,7 @@ class Alg_WC_Crowdfunding_Settings_General {
 			),
 			array(
 				'title'     => __( 'Message on Product Ended', 'crowdfunding-for-woocommerce' ),
-//				'desc_tip'  => __( 'You can change this in product edit on per product basis', 'crowdfunding-for-woocommerce' ),
+				'desc'      => sprintf( __( 'You can use shortcodes here. For example: %s.', 'crowdfunding-for-woocommerce' ), '[product_crowdfunding_time_remaining]' ),
 				'id'        => 'alg_woocommerce_crowdfunding_message_ended',
 				'default'   => __( '<strong>Ended!</strong>', 'crowdfunding-for-woocommerce' ),
 				'type'      => 'textarea',

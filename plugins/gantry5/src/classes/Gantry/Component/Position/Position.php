@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -17,9 +17,7 @@ use Gantry\Component\Collection\Collection;
 use Gantry\Component\File\CompiledYamlFile;
 use Gantry\Component\Filesystem\Folder;
 use Gantry\Framework\Gantry;
-use RocketTheme\Toolbox\ResourceLocator\UniformResourceIterator;
 use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
-use Symfony\Component\Yaml\Exception\DumpException;
 use Symfony\Component\Yaml\Yaml;
 
 class Position extends Collection
@@ -142,13 +140,14 @@ class Position extends Collection
     
     /**
      * @param Module|string $item
+     * @param string        $name  Temporary name for the module.
      * @return $this
      */
-    public function add($item)
+    public function add($item, $name = null)
     {
         if ($item instanceof Module) {
-            $this->modules[$item->name] = $item;
-            $item = $item->name;
+            $this->modules[$name ?: $item->name] = $item;
+            $item = $name ?: $item->name;
         }
 
         $this->items[] = $item;
@@ -156,7 +155,8 @@ class Position extends Collection
         return $this;
     }
 
-    public function remove($item) {
+    public function remove($item)
+    {
         if ($item instanceof Module) {
             $item = $item->name;
         }
@@ -332,6 +332,14 @@ class Position extends Collection
         }
 
         $this->title = isset($data['title']) ? $data['title'] : $this->name;
+
+        if (isset($data['modules'])) {
+            foreach ($data['modules'] as $array) {
+                $this->add(new Module($array['id'], $this->name, $array), $array['id'] ?: rand());
+            }
+
+            return;
+        }
 
         // Sort modules by ordering, if items are not listed in ordering, use alphabetical order.
         $ordering = isset($data['ordering']) ? array_flip($data['ordering']) : [];

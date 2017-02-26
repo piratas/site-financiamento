@@ -2,7 +2,7 @@
 /**
  * Crowdfunding for WooCommerce
  *
- * @version 2.3.1
+ * @version 2.3.2
  * @since   1.0.0
  * @author  Algoritmika Ltd.
  */
@@ -179,13 +179,19 @@ class Alg_WC_Crowdfunding {
 	/**
 	 * change_variable_add_to_cart_template.
 	 *
-	 * @version 2.0.0
+	 * @version 2.3.2
 	 * @since   2.0.0
 	 */
 	function change_variable_add_to_cart_template( $located, $template_name, $args, $template_path, $default_path ) {
-		if ( ! $this->is_crowdfunding_product() ) return $located;
-		if ( 'single-product/add-to-cart/variable.php' == $template_name ) {
-			$located = untrailingslashit( realpath( plugin_dir_path( __FILE__ ) . '/..' ) ) . '/includes/templates/alg-add-to-cart-variable.php';
+		$_product = wc_get_product();
+		if ( $_product && $this->is_crowdfunding_product( $_product ) ) {
+			if ( 'single-product/add-to-cart/variable.php' == $template_name ) {
+				$located = untrailingslashit( realpath( plugin_dir_path( __FILE__ ) . '/..' ) ) . '/includes/templates/alg-add-to-cart-variable.php';
+			} elseif ( 'single-product/add-to-cart/variation-add-to-cart-button.php' == $template_name ) {
+				if ( ! $this->is_started( $_product ) || ! $this->is_active( $_product ) ) {
+					$located = untrailingslashit( realpath( plugin_dir_path( __FILE__ ) . '/..' ) ) . '/includes/templates/alg-variation-add-to-cart-button-disabled.php';
+				}
+			}
 		}
 		return $located;
 	}
@@ -193,7 +199,7 @@ class Alg_WC_Crowdfunding {
 	/**
 	 * Returns false if already finished.
 	 *
-	 * @version 2.3.0
+	 * @version 2.3.2
 	 * @return  bool
 	 */
 	function is_active( $_product ) {
@@ -201,7 +207,7 @@ class Alg_WC_Crowdfunding {
 			$end_date_str = get_post_meta( $_product->id, '_' . 'alg_crowdfunding_deadline', true );
 			$end_time_str = get_post_meta( $_product->id, '_' . 'alg_crowdfunding_deadline_time', true );
 			$end_datetime = ( '' != $end_date_str ) ? strtotime( trim( $end_date_str . ' ' . $end_time_str, ' ' ) ) : 0;
-			if ( $end_datetime > 0 && ( $end_datetime - current_time( 'timestamp' ) ) < 0 ) {
+			if ( $end_datetime > 0 && ( $end_datetime - ( (int) current_time( 'timestamp' ) ) ) < 0 ) {
 				return false;
 			}
 		}
@@ -225,14 +231,14 @@ class Alg_WC_Crowdfunding {
 	/**
 	 * Returns false if not started yet.
 	 *
-	 * @version 2.0.0
-	 * @return bool
+	 * @version 2.3.2
+	 * @return  bool
 	 */
 	function is_started( $_product ) {
 		$start_date_str = get_post_meta( $_product->id, '_' . 'alg_crowdfunding_startdate', true );
 		$start_time_str = get_post_meta( $_product->id, '_' . 'alg_crowdfunding_starttime', true );
 		$start_datetime = ( '' != $start_date_str ) ? strtotime( trim( $start_date_str . ' ' . $start_time_str, ' ' ) ) : 0;
-		if ( $start_datetime > 0 && ( $start_datetime - current_time( 'timestamp' ) ) > 0 ) return false;
+		if ( $start_datetime > 0 && ( $start_datetime - ( (int) current_time( 'timestamp' ) ) ) > 0 ) return false;
 		return true;
 	}
 
@@ -252,14 +258,14 @@ class Alg_WC_Crowdfunding {
 	/**
 	 * is_purchasable_html.
 	 *
-	 * @version 2.0.0
+	 * @version 2.3.2
 	 * @return  bool
 	 */
 	public function is_purchasable_html() {
 		$_product = wc_get_product();
 		if ( $this->is_crowdfunding_product( $_product ) && ! $this->is_purchasable ( true, $_product ) ) {
-			if ( ! $this->is_started( $_product ) ) echo get_option( 'alg_woocommerce_crowdfunding_message_not_started' );
-			if ( ! $this->is_active( $_product ) )  echo get_option( 'alg_woocommerce_crowdfunding_message_ended' );
+			if ( ! $this->is_started( $_product ) ) echo do_shortcode( get_option( 'alg_woocommerce_crowdfunding_message_not_started' ) );
+			if ( ! $this->is_active( $_product ) )  echo do_shortcode( get_option( 'alg_woocommerce_crowdfunding_message_ended' ) );
 		}
 	}
 

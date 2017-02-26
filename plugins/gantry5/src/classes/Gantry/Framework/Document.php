@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   GNU/GPLv2 and later
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
@@ -10,10 +10,9 @@
 
 namespace Gantry\Framework;
 
-use Gantry\Component\Filesystem\Folder;
-use Gantry\Framework\Base\Document as BaseDocument;
+use Gantry\Component\Content\Document\HtmlDocument;
 
-class Document extends BaseDocument
+class Document extends HtmlDocument
 {
     public static $wp_styles = [];
     public static $wp_scripts = ['head' => [], 'footer' => []];
@@ -29,7 +28,9 @@ class Document extends BaseDocument
         'mootools' => 'registerMootools',
         'mootools.framework' => 'registerMootools',
         'mootools.core' => 'registerMootools',
-        'mootools.more' => 'registerMootoolsMore'
+        'mootools.more' => 'registerMootoolsMore',
+        'lightcase' => 'registerLightcase',
+        'lightcase.init' => 'registerLightcaseInit',
     ];
 
     public static function registerAssets()
@@ -42,65 +43,53 @@ class Document extends BaseDocument
 
     public static function registerStyles()
     {
-        if (empty(self::$styles['head'])) {
-            return;
-        }
+        $styles = static::$stack[0]->getStyles();
 
-        krsort(self::$styles['head'], SORT_NUMERIC);
-
-        foreach (self::$styles['head'] as $styles) {
-            foreach ($styles as $style) {
-                switch ($style[':type']) {
-                    case 'file':
-                        $array = explode('?', $style['href']);
-                        $href = array_shift($array);
-                        $version = array_shift($array) ?: false;
-                        $name = isset($style['id']) ? $style['id'] : basename($href, '.css');
-                        \wp_enqueue_style($name, $href, array(), $version, $style['media']);
-                        break;
-                    case 'inline':
-                        $type = !empty($style['type']) ? $style['type'] : 'text/css';
-                        self::$wp_styles[] = "<style type=\"{$type}\">{$style['content']}</style>";
-                        break;
-                }
+        foreach ($styles as $style) {
+            switch ($style[':type']) {
+                case 'file':
+                    $array = explode('?', $style['href']);
+                    $href = array_shift($array);
+                    $version = array_shift($array) ?: false;
+                    $name = isset($style['id']) ? $style['id'] : basename($href, '.css');
+                    \wp_enqueue_style($name, $href, array(), $version, $style['media']);
+                    break;
+                case 'inline':
+                    $type = !empty($style['type']) ? $style['type'] : 'text/css';
+                    self::$wp_styles[] = "<style type=\"{$type}\">{$style['content']}</style>";
+                    break;
             }
         }
 
-        self::$styles['head'] = [];
+        static::$stack[0]->clearStyles();
     }
 
     public static function registerScripts($pos)
     {
-        if (empty(self::$scripts[$pos])) {
-            return;
-        }
-
+        $scripts = static::$stack[0]->getScripts($pos);
         $in_footer = ($pos != 'head');
-        krsort(self::$scripts[$pos], SORT_NUMERIC);
 
-        foreach (self::$scripts[$pos] as $scripts) {
-            foreach ($scripts as $script) {
-                switch ($script[':type']) {
-                    case 'file':
-                        $array = explode('?', $script['src']);
-                        $src = array_shift($array);
-                        $version = array_shift($array) ?: false;
-                        $name = basename($src, '.js');
-                        if (!empty($script['handle'])) {
-                            $name = $script['handle'];
-                        }
-                        self::$script_info[$name] = $script;
-                        \wp_enqueue_script($name, $src, array(), $version, $in_footer);
-                        break;
-                    case 'inline':
-                        $type = !empty($script['type']) ? $script['type'] : 'text/javascript';
-                        self::$wp_scripts[$pos][] = "<script type=\"{$type}\">{$script['content']}</script>";
-                        break;
-                }
+        foreach ($scripts as $script) {
+            switch ($script[':type']) {
+                case 'file':
+                    $array = explode('?', $script['src']);
+                    $src = array_shift($array);
+                    $version = array_shift($array) ?: false;
+                    $name = basename($src, '.js');
+                    if (!empty($script['handle'])) {
+                        $name = $script['handle'];
+                    }
+                    self::$script_info[$name] = $script;
+                    \wp_enqueue_script($name, $src, array(), $version, $in_footer);
+                    break;
+                case 'inline':
+                    $type = !empty($script['type']) ? $script['type'] : 'text/javascript';
+                    self::$wp_scripts[$pos][] = "<script type=\"{$type}\">{$script['content']}</script>";
+                    break;
             }
         }
 
-        self::$scripts[$pos] = [];
+        static::$stack[0]->clearScripts($pos);
     }
 
     public static function domain($addDomain = false)
@@ -134,7 +123,8 @@ class Document extends BaseDocument
         static $path;
 
         if (!isset($path)) {
-            $url = \get_site_url();
+            // Support for WordPress core files stored in a non-root directory.
+            $url = defined('WP_HOME') && WP_HOME ? WP_HOME : \get_site_url();
             $components = parse_url($url);
 
             $path = !empty($components['path']) ? $components['path'] : '/';

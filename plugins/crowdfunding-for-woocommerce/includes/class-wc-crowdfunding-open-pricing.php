@@ -4,7 +4,7 @@
  *
  * The WooCommerce Crowdfunding Product Open Pricing class.
  *
- * @version 2.2.0
+ * @version 2.3.4
  * @since   2.2.0
  * @author  Algoritmika Ltd.
  */
@@ -141,7 +141,7 @@ class Alg_Crowdfunding_Product_Open_Pricing {
 	/**
 	 * validate_open_price_on_add_to_cart.
 	 *
-	 * @version 2.2.0
+	 * @version 2.3.3
 	 * @since   2.2.0
 	 */
 	function validate_open_price_on_add_to_cart( $passed, $product_id ) {
@@ -155,13 +155,13 @@ class Alg_Crowdfunding_Product_Open_Pricing {
 					return false;
 				}
 				if ( $_POST['alg_crowdfunding_open_price'] < $min_price ) {
-					wc_add_notice( get_option( 'alg_crowdfunding_product_open_price_messages_to_small', __( 'Entered price is to small!', 'crowdfunding-for-woocommerce' ) ), 'error' );
+					wc_add_notice( get_option( 'alg_crowdfunding_product_open_price_messages_to_small', __( 'Entered price is too small!', 'crowdfunding-for-woocommerce' ) ), 'error' );
 					return false;
 				}
 			}
 			if ( $max_price > 0 ) {
 				if ( isset( $_POST['alg_crowdfunding_open_price'] ) && $_POST['alg_crowdfunding_open_price'] > $max_price ) {
-					wc_add_notice( get_option( 'alg_crowdfunding_product_open_price_messages_to_big', __( 'Entered price is to big!', 'crowdfunding-for-woocommerce' ) ), 'error' );
+					wc_add_notice( get_option( 'alg_crowdfunding_product_open_price_messages_to_big', __( 'Entered price is too big!', 'crowdfunding-for-woocommerce' ) ), 'error' );
 					return false;
 				}
 			}
@@ -211,7 +211,7 @@ class Alg_Crowdfunding_Product_Open_Pricing {
 	/**
 	 * add_open_price_input_field_to_frontend.
 	 *
-	 * @version 2.2.0
+	 * @version 2.3.4
 	 * @since   2.2.0
 	 */
 	function add_open_price_input_field_to_frontend() {
@@ -223,23 +223,30 @@ class Alg_Crowdfunding_Product_Open_Pricing {
 				$_POST['alg_crowdfunding_open_price'] :
 				get_post_meta( $the_product->id, '_' . 'alg_crowdfunding_product_open_price_default_price', true );
 			$custom_attributes = '';
-			$wc_price_decimals = wc_get_price_decimals();
+			$wc_price_decimals = get_post_meta( $the_product->id, '_' . 'alg_crowdfunding_product_open_price_step', true );
+			if ( '' === $wc_price_decimals ) {
+				$wc_price_decimals = wc_get_price_decimals();
+			}
 			if ( $wc_price_decimals > 0 ) {
 				$custom_attributes .= sprintf( 'step="0.%0' . ( $wc_price_decimals ) . 'd" ', 1 );
 			}
-			echo
-				/* '<div>' . */ '<label for="alg_crowdfunding_open_price">' . $title . '</label>' . ' '
-				. '<input '
-					. 'type="number" '
-					. 'class="text" '
-					. 'style="width:75px;text-align:center;" '
-					. 'name="alg_crowdfunding_open_price" '
-					. 'id="alg_crowdfunding_open_price" '
-//					. 'placeholder="' . $placeholder . '" '
-					. 'value="' . $value . '" '
-					. $custom_attributes
-				. '>'
-				. ' ' . get_woocommerce_currency_symbol() /* . '</div>' */;
+			$input_field = '<input '
+				. 'type="number" '
+				. 'class="text" '
+				. 'style="width:75px;text-align:center;" '
+				. 'name="alg_crowdfunding_open_price" '
+				. 'id="alg_crowdfunding_open_price" '
+//				. 'placeholder="' . $placeholder . '" '
+				. 'value="' . $value . '" '
+				. $custom_attributes
+			. '>';
+			$template = get_option( 'alg_crowdfunding_open_price_template',
+				'<label for="alg_crowdfunding_open_price">%title%</label> %input_field% %currency_symbol%' );
+			echo str_replace(
+				array( '%title%', '%input_field%', '%currency_symbol%' ),
+				array( $title,    $input_field,    get_woocommerce_currency_symbol() ),
+				$template
+			);
 		}
 	}
 

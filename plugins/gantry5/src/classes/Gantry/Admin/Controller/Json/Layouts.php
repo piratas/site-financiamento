@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -13,15 +13,10 @@
 
 namespace Gantry\Admin\Controller\Json;
 
-use Gantry\Component\Config\BlueprintsForm;
-use Gantry\Component\Controller\JsonController;
-use Gantry\Component\File\CompiledYamlFile;
-use Gantry\Component\Filesystem\Folder;
+use Gantry\Component\Admin\JsonController;
+use Gantry\Component\Config\BlueprintForm;
 use Gantry\Component\Layout\Layout;
 use Gantry\Component\Response\JsonResponse;
-use Gantry\Framework\Base\Gantry;
-use RocketTheme\Toolbox\File\JsonFile;
-use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
 
 /**
  * Class Layouts
@@ -55,7 +50,9 @@ class Layouts extends JsonController
         $clone = $post['mode'] === 'clone';
         $id = $post['id'];
 
+        $this->container['outline'] = $outline;
         $this->container['configuration'] = $outline;
+
         $layout = Layout::instance($outline);
         if ($inherit) {
             $layout->inheritAll();
@@ -84,16 +81,14 @@ class Layouts extends JsonController
             $name = $type;
             $particle = false;
             $defaults = [];
-            $file = CompiledYamlFile::instance("gantry-admin://blueprints/layout/{$name}.yaml");
-            $blueprints = new BlueprintsForm($file->content());
-            $file->free();
+            $blueprints = BlueprintForm::instance("layout/{$name}.yaml", 'gantry-admin://blueprints');
         } else {
             $name = $subtype;
             $particle = true;
             $defaults = $this->container['config']->get("particles.{$name}");
             $item->attributes = $item->attributes + $defaults;
-            $blueprints = new BlueprintsForm($this->container['particles']->get($name));
-            $blueprints->set('form.fields._inherit', ['type' => 'gantry.inherit']);
+            $blueprints = $this->container['particles']->getBlueprintForm($name);
+            $blueprints->set('form/fields/_inherit', ['type' => 'gantry.inherit']);
         }
 
         $paramsParticle = [
@@ -108,7 +103,7 @@ class Layouts extends JsonController
             'skip'          => ['enabled']
         ] + $params;
 
-        $html['g-settings-particle'] = $this->container['admin.theme']->render('@gantry-admin/pages/configurations/layouts/particle-card.html.twig',  $paramsParticle);
+        $html['g-settings-particle'] = $this->render('@gantry-admin/pages/configurations/layouts/particle-card.html.twig',  $paramsParticle);
         $html['g-settings-block-attributes'] = $this->renderBlockFields($block, $params);
         if ($path == 'list') {
             $html['g-inherit-particle'] = $this->renderParticlesInput($inherit || $clone ? $outline : null, $subtype, $post['selected']);
@@ -124,6 +119,7 @@ class Layouts extends JsonController
         $outline = $post['outline'];
         $id = $post['id'];
 
+        $this->container['outline'] = $outline;
         $this->container['configuration'] = $outline;
 
         $layout = Layout::instance($outline);
@@ -140,12 +136,10 @@ class Layouts extends JsonController
         $defaults = (array) $this->container['config']->get($prefix);
         $attributes = (array) $particle->attributes + $defaults;
 
-        $particleBlueprints = new BlueprintsForm($this->container['particles']->get($name));
-        $particleBlueprints->set('form.fields._inherit', ['type' => 'gantry.inherit']);
+        $particleBlueprints = $this->container['particles']->getBlueprintForm($name);
+        $particleBlueprints->set('form/fields/_inherit', ['type' => 'gantry.inherit']);
 
-        $file = CompiledYamlFile::instance("gantry-admin://blueprints/layout/block.yaml");
-        $blockBlueprints = new BlueprintsForm($file->content());
-        $file->free();
+        $blockBlueprints = BlueprintForm::instance('layout/block.yaml', 'gantry-admin://blueprints');
 
         // TODO: Use blueprints to merge configuration.
         $particle->attributes = (object) $attributes;
@@ -166,7 +160,7 @@ class Layouts extends JsonController
             'overrideable'  => true,
         ];
 
-        $html = $this->container['admin.theme']->render('@gantry-admin/pages/configurations/layouts/particle-preview.html.twig', $this->params);
+        $html = $this->render('@gantry-admin/pages/configurations/layouts/particle-preview.html.twig', $this->params);
 
         return new JsonResponse(['html' => $html]);
     }
@@ -180,18 +174,16 @@ class Layouts extends JsonController
      */
      protected function renderBlockFields(array $block, array $params)
      {
-         $file = CompiledYamlFile::instance("gantry-admin://blueprints/layout/block.yaml");
-         $blockBlueprints = new BlueprintsForm($file->content());
-         $file->free();
+         $blockBlueprints = BlueprintForm::instance('layout/block.yaml', 'gantry-admin://blueprints');
 
          $paramsBlock = [
                  'title' => $this->container['translator']->translate('GANTRY5_PLATFORM_BLOCK'),
-                 'blueprints' => ['fields' => $blockBlueprints->get('form.fields.block_container.fields')],
+                 'blueprints' => ['fields' => $blockBlueprints->get('form/fields/block_container/fields')],
                  'data' => ['block' => $block],
                  'prefix' => 'block.',
              ] + $params;
 
-         return $this->container['admin.theme']->render('@gantry-admin/forms/fields.html.twig',  $paramsBlock);
+         return $this->render('@gantry-admin/forms/fields.html.twig',  $paramsBlock);
      }
 
     /**
@@ -237,6 +229,6 @@ class Layouts extends JsonController
             'value' => $instances['selected']
         ];
 
-        return $this->container['admin.theme']->render('@gantry-admin/forms/fields/gantry/particles.html.twig', $params);
+        return $this->render('@gantry-admin/forms/fields/gantry/particles.html.twig', $params);
     }
 }

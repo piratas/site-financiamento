@@ -3,8 +3,8 @@ Contributors: claudiosanches, Gabriel Reguly
 Donate link: http://claudiosmweb.com/doacoes/
 Tags: woocommerce, pagseguro, payment
 Requires at least: 4.0
-Tested up to: 4.5
-Stable tag: 2.11.3
+Tested up to: 4.7
+Stable tag: 2.11.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -38,11 +38,11 @@ Estão disponíveis as seguintes modalidades de pagamento:
 - **Lightbox:** Uma janela do PagSeguro é aberta na finalização para o cliente fazer o pagamento.
 - **Transparente:** O cliente faz o pagamento direto no seu site sem precisar ir ao site do PagSeguro.
 
-Além que é possível utilizar o novo [sandbox do PagSeguro](https://sandbox.pagseguro.uol.com.br/comprador-de-testes.html).
+Além que é possível utilizar o novo [sandbox do PagSeguro](https://sandbox.pagseguro.uol.com.br/vendedor/configuracoes.html).
 
 = Compatibilidade =
 
-Compatível com as versões 2.2.x, 2.3.x, 2.4.x e 2.5.x do WooCommerce.
+Compatível desde a versão 2.2.x até 2.6.x do WooCommerce.
 
 Este plugin também é compatível com o [WooCommerce Extra Checkout Fields for Brazil](http://wordpress.org/plugins/woocommerce-extra-checkout-fields-for-brazil/), desta forma é possível enviar os campos de "CPF", "número do endereço" e "bairro" (para o Checkout Transparente é obrigatório o uso deste plugin).
 
@@ -194,7 +194,7 @@ Gere um novo Token no PagSeguro em "Preferências" > "[Integrações](https://pa
 
 Outro erro comum é gerar um token e cadastrar nas configurações do plugin um e-mail que não é o proprietário do token, então tenha certeza que estes dados estão realmente corretos!
 
-Note que caso você esteja utilizando a opção de **sandbox** é necessário usar um e-mail e token de testes que podem ser encontrados em "[PagSeguro Sandbox > Dados de Teste](https://sandbox.pagseguro.uol.com.br/comprador-de-testes.html)".
+Note que caso você esteja utilizando a opção de **sandbox** é necessário usar um e-mail e token de testes que podem ser encontrados em "[PagSeguro Sandbox > Dados de Teste](https://sandbox.pagseguro.uol.com.br/vendedor/configuracoes.html)".
 
 Se você tem certeza que o Token e Login estão corretos você deve acessar a página "WooCommerce > Status do Sistema" e verificar se **fsockopen** e **cURL** estão ativos. É necessário procurar ajuda do seu provedor de hospedagem caso você tenha o **fsockopen** e/ou o **cURL** desativados.
 
@@ -230,7 +230,7 @@ Note que é necessário aprovação do PagSeguro para utilizar o Checkout Transp
 
 = Funciona com o Sandbox do PagSeguro? =
 
-Sim, funciona e basta você ativar isso nas opções do plugin, além de configurar o seu [e-mail e token de testes](https://sandbox.pagseguro.uol.com.br/comprador-de-testes.html)".
+Sim, funciona e basta você ativar isso nas opções do plugin, além de configurar o seu [e-mail e token de testes](https://sandbox.pagseguro.uol.com.br/vendedor/configuracoes.html)".
 
 = O total do pedido no WooCommerce é diferente do enviado para o PagSeguro, como eu resolvo isso? =
 
@@ -255,6 +255,17 @@ Por favor, caso você tenha algum problema com o funcionamento do plugin, [abra 
 
 == Changelog ==
 
+= 2.11.5 - 2017/01/17 =
+
+* Adicionada nota dizendo que o pedido esta sendo feito no Brasil durante o Checkout Transparente.
+
+= 2.11.4 - 2016/11/30 =
+
+* Adicionada nova mensagem de erro quando utilizado o mesmo e-mail para realizar pagamentos com o mesmo e-mail da conta do recebedor.
+* Removida opção obsoleta de déposito bancário pelo Bradesco.
+* Corrigido links do Sandbox na página de administração.
+* Adicionada modificação para enviar nome da empresa quando utilizado CNPJ.
+
 = 2.11.3 - 2016/03/17 =
 
 * Corrigida finalização com produtos gratuitos.
@@ -273,37 +284,8 @@ Por favor, caso você tenha algum problema com o funcionamento do plugin, [abra 
 * Melhorado o checkout transparente quando usado o tema Storefront.
 * Adicionada opções para token e e-mail de sandbox.
 
-= 2.10.2 - 2015/08/08 =
-
-* Corrigido erro na tradução pt_BR do plugin.
-
-= 2.10.1 - 2015/08/08 =
-
-* Corrigido os links dos alertas sobre opções obrigatórios não configuradas do plugin.
-
-= 2.10.0 - 2015/08/08 =
-
-* Adicionado suporte para WooCommerce 2.4.x.
-* Removido suporte para WooCommerce 2.0.x.
-
-= 2.9.0 - 2015/06/23 =
-
-* Adicionado método para ignorar a opção "Manter Estoque (minutos)" do WooCommerce.
-
-= 2.8.1 - 2015/02/07 =
-
-* Melhorado o suporte do Checkout Transparente no WooCommerce 2.3.
-
-= 2.8.0 - 2015/02/03 =
-
-* Adicionado suporte para o WooCommerce 2.3.
-* Adicionado suporte para WooCommerce Multilingual. 
-* Adicionado recurso para utilizar o endereço de entrega no Lightbox (antes funcionava apenas com checkout normal ou transparente).
-* Adicionada alerta de erro para CPF invalido com checkout transparente.
-* Correções na tradução do plugin.
-
 == Upgrade Notice ==
 
-= 2.11.3 - 2016/03/17 =
+= 2.11.5 =
 
-* Corrigida finalização com produtos gratuitos.
+* Adicionada nota dizendo que o pedido esta sendo feito no Brasil durante o Checkout transparente.

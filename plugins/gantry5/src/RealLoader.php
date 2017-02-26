@@ -3,7 +3,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -45,8 +45,8 @@ abstract class RealLoader
             throw new \LogicException(self::$errorMessageGantryLoaded);
         }
 
-        define('GANTRY5_VERSION', '5.3.9');
-        define('GANTRY5_VERSION_DATE', 'November 23, 2016');
+        define('GANTRY5_VERSION', '5.4.8');
+        define('GANTRY5_VERSION_DATE', 'February 14, 2017');
 
         if (!defined('DS')) {
             define('DS', DIRECTORY_SEPARATOR);
@@ -70,7 +70,13 @@ abstract class RealLoader
             define('GANTRY5_ROOT', JPATH_ROOT);
         } elseif (defined('WP_DEBUG') && defined('ABSPATH')) {
             define('GANTRY5_PLATFORM', 'wordpress');
-            define('GANTRY5_ROOT', ABSPATH);
+            if (class_exists('Env') && defined('CONTENT_DIR')) {
+                // Bedrock support.
+                define('GANTRY5_ROOT', preg_replace('|' . preg_quote(CONTENT_DIR). '$|', '', WP_CONTENT_DIR));
+            } else {
+                // Plain WP support.
+                define('GANTRY5_ROOT', ABSPATH);
+            }
         } elseif (defined('GRAV_VERSION') && defined('ROOT_DIR')) {
             define('GANTRY5_PLATFORM', 'grav');
             define('GANTRY5_ROOT', rtrim(ROOT_DIR, '/'));

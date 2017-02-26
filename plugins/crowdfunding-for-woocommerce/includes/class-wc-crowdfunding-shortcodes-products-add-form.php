@@ -4,7 +4,7 @@
  *
  * The WooCommerce Crowdfunding Products Add Form Shortcodes class.
  *
- * @version 2.3.0
+ * @version 2.3.3
  * @since   2.3.0
  * @author  Algoritmika Ltd.
  * @todo    refill image on not validated (or after successful addition)?; more messages options; more styling options; custom fields; variable products; user selection of product type (simple, variable, open pricing);
@@ -29,21 +29,21 @@ class Alg_WC_Crowdfunding_Products_Add_Form_Shortcodes {
 	/**
 	 * init.
 	 *
-	 * @version 2.3.0
+	 * @version 2.3.2
 	 * @since   2.3.0
 	 */
 	function init() {
 
-		$this->standard_fields     = alg_get_user_campaing_standard_fields();
-		$this->crowdfunding_fields = alg_get_user_campaing_crowdfunding_fields();
-		$this->fields              = alg_get_user_campaing_all_fields();
+		$this->standard_fields     = alg_get_user_campaign_standard_fields();
+		$this->crowdfunding_fields = alg_get_user_campaign_crowdfunding_fields();
+		$this->fields              = alg_get_user_campaign_all_fields();
 
 		$this->the_atts = array(
-			'product_id'             => 0,
-			'post_status'            => get_option( 'alg_wc_crowdfunding_product_by_user_status', 'draft' ),
-			'visibility'             => implode( ',', get_option( 'alg_wc_crowdfunding_product_by_user_user_visibility', array() ) ),
-			'module'                 => 'product_by_user',
-			'module_name'            => __( 'Product by User', 'crowdfunding-for-woocommerce' ),
+			'product_id'  => 0,
+			'post_status' => get_option( 'alg_wc_crowdfunding_product_by_user_status', 'draft' ),
+			'visibility'  => /* implode( ',', */ get_option( 'alg_wc_crowdfunding_product_by_user_user_visibility', array() ) /* ) */,
+			'module'      => 'product_by_user',
+			'module_name' => __( 'Product by User', 'crowdfunding-for-woocommerce' ),
 		);
 
 		foreach ( $this->fields as $field_id => $field_data ) {
@@ -55,7 +55,7 @@ class Alg_WC_Crowdfunding_Products_Add_Form_Shortcodes {
 	/**
 	 * wc_add_new_product.
 	 *
-	 * @version 2.3.0
+	 * @version 2.3.2
 	 * @since   2.3.0
 	 */
 	function wc_add_new_product( $args, $shortcode_atts ) {
@@ -105,6 +105,8 @@ class Alg_WC_Crowdfunding_Products_Add_Form_Shortcodes {
 			update_post_meta( $product_id, '_' . 'alg_crowdfunding_product_open_price_default_price', $args['open_pricing_default_price'] );
 			update_post_meta( $product_id, '_' . 'alg_crowdfunding_product_open_price_min_price',     $args['open_pricing_min_price'] );
 			update_post_meta( $product_id, '_' . 'alg_crowdfunding_product_open_price_max_price',     $args['open_pricing_max_price'] );
+
+			do_action( 'alg_crowdfunding_user_campaign_save_fields', $product_id, $args );
 
 			// Image
 			if ( '' != $args['image'] && '' != $args['image']['tmp_name'] ) {
@@ -178,9 +180,24 @@ class Alg_WC_Crowdfunding_Products_Add_Form_Shortcodes {
 	}
 
 	/**
+	 * is_user_role.
+	 *
+	 * @version 2.3.2
+	 * @since   2.3.2
+	 * @return  bool
+	 */
+	function is_user_role( $user_role, $user_id = 0 ) {
+		$the_user = ( 0 == $user_id ) ? wp_get_current_user() : get_user_by( 'id', $user_id );
+		if ( ! isset( $the_user->roles ) || empty( $the_user->roles ) ) {
+			$the_user->roles = array( 'guest' );
+		}
+		return ( isset( $the_user->roles ) && is_array( $the_user->roles ) && in_array( $user_role, $the_user->roles ) ) ? true : false;
+	}
+
+	/**
 	 * alg_wc_crowdfunding_product_add_new.
 	 *
-	 * @version 2.3.0
+	 * @version 2.3.2
 	 * @since   2.3.0
 	 */
 	function alg_wc_crowdfunding_product_add_new( $atts ) {
@@ -189,16 +206,42 @@ class Alg_WC_Crowdfunding_Products_Add_Form_Shortcodes {
 
 		$atts = wp_parse_args( $atts, $this->the_atts );
 
+		// Check if privileges are ok
+		if ( '' != $atts['visibility'] ) {
+			$visibilities = /* str_replace( ' ', '', */ $atts['visibility'] /* ) */;
+			/* $visibilities = explode( ',', $visibilities ); */
+			$is_iser_visibility_ok = false;
+			foreach ( $visibilities as $visibility ) {
+				if ( 'admin' === $visibility ) {
+					$visibility = 'administrator';
+				}
+				if ( $this->is_user_role( $visibility ) ) {
+					$is_iser_visibility_ok = true;
+					break;
+				}
+			}
+			if ( ! $is_iser_visibility_ok ) {
+//				return '<p><a href="' . wp_login_url( get_permalink() ) . '" title="' . $atts['login_text'] . '">' . $atts['login_text'] . '</a></p>';
+				if ( ! is_user_logged_in() ) {
+					ob_start();
+					woocommerce_login_form();
+					return ob_get_clean();
+				} else {
+					return '<p>' . __( 'Wrong user role!', 'crowdfunding-for-woocommerce' ) . '</p>';
+				}
+			}
+		}
+
 		$header_html       = '';
 		$notice_html       = '';
 		$input_fields_html = '';
 		$footer_html       = '';
 
 		$args = array(
-			'title'             => isset( $_REQUEST['alg_wc_crowdfunding_add_new_product_title'] ) ? $_REQUEST['alg_wc_crowdfunding_add_new_product_title'] : '',
-			'cats'              => isset( $_REQUEST['alg_wc_crowdfunding_add_new_product_cats'] )  ? $_REQUEST['alg_wc_crowdfunding_add_new_product_cats']  : array(),
-			'tags'              => isset( $_REQUEST['alg_wc_crowdfunding_add_new_product_tags'] )  ? $_REQUEST['alg_wc_crowdfunding_add_new_product_tags']  : array(),
-			'image'             => isset( $_FILES['alg_wc_crowdfunding_add_new_product_image'] )   ? $_FILES['alg_wc_crowdfunding_add_new_product_image']   : '',
+			'title' => isset( $_REQUEST['alg_wc_crowdfunding_add_new_product_title'] ) ? $_REQUEST['alg_wc_crowdfunding_add_new_product_title'] : '',
+			'cats'  => isset( $_REQUEST['alg_wc_crowdfunding_add_new_product_cats'] )  ? $_REQUEST['alg_wc_crowdfunding_add_new_product_cats']  : array(),
+			'tags'  => isset( $_REQUEST['alg_wc_crowdfunding_add_new_product_tags'] )  ? $_REQUEST['alg_wc_crowdfunding_add_new_product_tags']  : array(),
+			'image' => isset( $_FILES['alg_wc_crowdfunding_add_new_product_image'] )   ? $_FILES['alg_wc_crowdfunding_add_new_product_image']   : '',
 		);
 		foreach ( $this->fields as $field_id => $field_data ) {
 			if ( ! isset( $args[ $field_id ] ) ) {
@@ -372,6 +415,7 @@ class Alg_WC_Crowdfunding_Products_Add_Form_Shortcodes {
 			} */
 			$table_data = $this->maybe_add_field_row(
 				$field_id,
+				$field_data,
 				$field_data['type'],
 				$field_data['desc'],
 				$field_data['meta_name'],
@@ -392,37 +436,54 @@ class Alg_WC_Crowdfunding_Products_Add_Form_Shortcodes {
 	/**
 	 * maybe_add_field_row.
 	 *
-	 * @version 2.3.0
+	 * @version 2.3.3
 	 * @since   2.3.0
 	 */
-	function maybe_add_field_row( $field_id, $type, $field_desc, $meta_name, $atts, $args, $table_data ) {
+	function maybe_add_field_row( $field_id, $field_data, $type, $field_desc, $meta_name, $atts, $args, $table_data ) {
 		if ( 'yes' === $atts[ $field_id . '_enabled' ] ) {
 			$required_mark_html_template = '&nbsp;<abbr class="required" title="required">*</abbr>'; // todo
 			$required_html      = ( 'yes' === $atts[ $field_id . '_required' ] ) ? ' required' : '';
 			$required_mark_html = ( 'yes' === $atts[ $field_id . '_required' ] ) ? $required_mark_html_template : '';
 			$value = ( ( 0 != $atts['product_id'] ) ? get_post_meta( $atts['product_id'], '_' . $meta_name, true ) : $args[ $field_id ] );
 			$custom_attributes = '';
-			if ( 'price' === $type ) {
-				$type = 'number';
-				$custom_attributes = ' min="0" step="0.01"';
-			} elseif ( 'number' === $type ) {
-				$custom_attributes = ' min="0"';
-			} elseif ( 'checkbox' === $type ) {
-				$custom_attributes = checked( $value, 'yes', false );
-			} elseif ( 'date' === $type ) {
-				$type = 'text';
-				$custom_attributes = ' display="date"';
-			} elseif ( 'time' === $type ) {
-				$type = 'text';
-				$custom_attributes = ' display="time"';
+			switch ( $type ) {
+				case 'price':
+					$type = 'number';
+					$custom_attributes = ' min="0" step="0.01"';
+					break;
+				case 'number';
+					$custom_attributes = ' min="0"';
+					break;
+				case 'checkbox';
+					$custom_attributes = checked( $value, 'yes', false );
+					break;
+				case 'date';
+					$type = 'text';
+					$custom_attributes = ' display="alg_crowdfunding_date"';
+					break;
+				case 'time';
+					$type = 'text';
+					$custom_attributes = ' display="alg_crowdfunding_time"';
+					break;
 			}
-			$table_data[] = array(
-				'<label for="alg_wc_crowdfunding_add_new_product_' . $field_id . '">' . $field_desc . $required_mark_html . '</label>',
-				'<input' . $required_html .
+			if ( 'select' === $type ) {
+				$the_field = '<select' . $required_html .
+					' id="alg_wc_crowdfunding_add_new_product_' . $field_id . '"' .
+					' name="alg_wc_crowdfunding_add_new_product_' . $field_id . '">';
+				foreach ( $field_data['options'] as $option_key => $option_name ) {
+					$the_field .= '<option value="' . $option_key . '" ' . selected( $option_key, $value, false ) . '>' . $option_name . '</option>';
+				}
+				$the_field .= '</select>';
+			} else {
+				$the_field = '<input' . $required_html .
 					' type="' . $type . '"' . $custom_attributes .
 					' id="alg_wc_crowdfunding_add_new_product_' . $field_id . '"' .
 					' name="alg_wc_crowdfunding_add_new_product_' . $field_id . '"' .
-					' value="' . $value . '">'
+					' value="' . $value . '">';
+			}
+			$table_data[] = array(
+				'<label for="alg_wc_crowdfunding_add_new_product_' . $field_id . '">' . $field_desc . $required_mark_html . '</label>',
+				$the_field,
 			);
 		}
 		return $table_data;

@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   GNU/GPLv2 and later
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
@@ -78,7 +78,8 @@ abstract class Widgets
                     // As we already rendered content, we can later just display it.
                     $wp_registered_widgets[$id]['callback'] = function () use ($contents) {
                         echo $contents;
-                    };                }
+                    };
+                }
             }
 
             $html = '@@DEFERRED@@';

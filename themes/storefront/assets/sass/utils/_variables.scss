@@ -5,18 +5,21 @@
 
 $base-font: 		"Source Sans Pro", "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
 $header-font: 		$base-font;
+$ms-base:           1em, .875em;
+$ms-ratio:          1.618;
+
 
 // base color scheme
 $body-background: 	#ffffff;
 $color_body: 		#43454b;
 $color_links: 		#2c2d33;
 $color_border:		rgba(0,0,0,0.05);
+$color_woocommerce: #96588a;
 $error: 			#e2401c;
 $success: 			#0f834d;
 $info: 				#3D9CD2;
 
 // layout sizes
-$vspacing: 			1.618em;
 $desktop:			768px;
 $handheld:			568px;
 $container-width:	67.141em;

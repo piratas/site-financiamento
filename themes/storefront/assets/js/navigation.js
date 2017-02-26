@@ -1,9 +1,19 @@
 /**
  * navigation.js
  *
- * Handles toggling the navigation menu for small screens and adds a focus class to parent li's for accessibility.
+ * Handles toggling the navigation menu for small screens.
+ * Also adds a focus class to parent li's for accessibility.
+ * Finally adds a class required to reveal the search in the handheld footer bar.
  */
 ( function() {
+	// Add class to footer search when clicked
+	jQuery( window ).load( function() {
+		jQuery( '.storefront-handheld-footer-bar .search > a' ).click( function(e) {
+			jQuery( this ).parent().toggleClass( 'active' );
+			e.preventDefault();
+		});
+	});
+
 	var container, button, menu;
 
 	container = document.getElementById( 'site-navigation' );
@@ -54,11 +64,22 @@
 		});
 	});
 
-	// Add class to footer search when clicked
-	jQuery( window ).load( function() {
-		jQuery( '.storefront-handheld-footer-bar .search > a' ).click( function(e) {
-			jQuery( this ).parent().toggleClass( 'active' );
-			e.preventDefault();
+	if ( is_touch_device() && jQuery( window ).width() > 767 ) {
+		// Add an identifying class to dropdowns when on a touch device
+		// This is required to switch the dropdown hiding method from a negative `left` value to `display: none`.
+		jQuery( '.main-navigation ul ul, .secondary-navigation ul ul, .site-header-cart .widget_shopping_cart' ).addClass( 'sub-menu--is-touch-device' );
+
+		// Ensure the dropdowns close when user taps outside the site header
+		jQuery( '.site-content, .header-widget-region, .site-footer, .site-header:not(a)' ).on( 'click', function() {
+			return;
 		});
-	});
+	}
+
+	/**
+	 * Check if the device is touch enabled
+	 * @return Boolean
+	 */
+	function is_touch_device() {
+		return 'ontouchstart' in window || navigator.maxTouchPoints;
+	}
 } )();

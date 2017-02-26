@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -30,6 +30,7 @@ abstract class Platform
     use NestedArrayAccess, Export;
 
     protected $name;
+    protected $features = [];
     protected $settings_key;
     protected $items;
     protected $container;
@@ -122,6 +123,11 @@ abstract class Platform
         return $this;
     }
 
+    public function has($feature)
+    {
+        return !empty($this->features[$feature]);
+    }
+
     public function getThemePaths()
     {
         return ['' => []];
@@ -204,6 +210,29 @@ abstract class Platform
 
     public function authorize($action)
     {
+        return true;
+    }
+
+    /**
+     * @param array|string $dependencies
+     * @return bool|null
+     * @since 5.4.3
+     */
+    public function checkDependencies($dependencies)
+    {
+        if (is_string($dependencies) && $dependencies !== $this->name) {
+            return false;
+        }
+
+        if (isset($dependencies['platform'])) {
+            if (is_string($dependencies['platform']) && $dependencies['platform'] !== $this->name) {
+                return false;
+            }
+            if (!isset($dependencies['platform'][$this->name])) {
+                return false;
+            }
+        }
+
         return true;
     }
 }

@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -20,6 +20,7 @@ class System extends SystemFacade
     protected $registeredPatterns;
     protected $whoopsErrorHandler;
     protected $whoopsExceptionHandler;
+    protected $whoopsShutdownHandler;
     protected $platformExceptionHandler;
 
     /**
@@ -51,6 +52,17 @@ class System extends SystemFacade
         $this->whoopsErrorHandler = $handler;
 
         return parent::setErrorHandler([$this, 'handleError'], $types);
+    }
+
+    /**
+     * @param callable $function
+     *
+     * @return void
+     */
+    public function registerShutdownFunction(callable $function)
+    {
+        $this->whoopsShutdownHandler = $function;
+        register_shutdown_function([$this, 'handleShutdown']);
     }
 
     /**
@@ -92,7 +104,7 @@ class System extends SystemFacade
         // If there are registered patterns, only handle errors if error matches one of the patterns.
         if ($level & error_reporting()) {
             foreach ($this->registeredPatterns as $entry) {
-                $pathMatches = (bool) preg_match($entry["pattern"], $file);
+                $pathMatches = $file && preg_match($entry["pattern"], $file);
                 if ($pathMatches) {
                     return $handler($level, $message, $file, $line);
                 }
@@ -116,7 +128,8 @@ class System extends SystemFacade
         // If there are registered patterns, only handle errors if error matches one of the patterns.
         if ($this->registeredPatterns) {
             foreach ($this->registeredPatterns as $entry) {
-                $pathMatches = (bool) preg_match($entry["pattern"], $exception->getFile());
+                $file = $exception->getFile();
+                $pathMatches = $file && preg_match($entry["pattern"], $file);
                 if ($pathMatches) {
                     $handler($exception);
                     return;
@@ -127,6 +140,21 @@ class System extends SystemFacade
         // Propagate error to the next handler.
         if ($this->platformExceptionHandler) {
             call_user_func_array($this->platformExceptionHandler, [&$exception]);
+        }
+    }
+
+    /**
+     * Special case to deal with Fatal errors and the like.
+     */
+    public function handleShutdown()
+    {
+        $handler = $this->whoopsShutdownHandler;
+
+        $error = $this->getLastError();
+
+        // Ignore core warnings and errors.
+        if ($error && !($error['type'] & (E_CORE_WARNING | E_CORE_ERROR))) {
+            $handler();
         }
     }
 }

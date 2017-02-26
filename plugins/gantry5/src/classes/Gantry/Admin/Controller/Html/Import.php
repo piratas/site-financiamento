@@ -2,7 +2,7 @@
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2016 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -13,11 +13,9 @@
 
 namespace Gantry\Admin\Controller\Html;
 
-use Gantry\Component\Controller\HtmlController;
+use Gantry\Component\Admin\HtmlController;
 use Gantry\Component\Filesystem\Folder;
-use Gantry\Framework\Gantry;
 use Gantry\Framework\Importer;
-use RocketTheme\Toolbox\File\YamlFile;
 use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
 use Symfony\Component\Yaml\Yaml;
 
@@ -34,7 +32,7 @@ class Import extends HtmlController
 
     public function index()
     {
-        return $this->container['admin.theme']->render('@gantry-admin/pages/import/import.html.twig', $this->params);
+        return $this->render('@gantry-admin/pages/import/import.html.twig', $this->params);
     }
 
     public function import()
@@ -82,6 +80,6 @@ class Import extends HtmlController
 
         $this->params['success'] = true;
 
-        return $this->container['admin.theme']->render('@gantry-admin/pages/import/import.html.twig', $this->params);
+        return $this->render('@gantry-admin/pages/import/import.html.twig', $this->params);
     }
 }

@@ -6,8 +6,7 @@
 WP_DIR='/var/www/html/wp-content/'
 CONTENT_DIRS='languages plugins themes uploads'
 
-for directory in ${CONTENT_DIRS}
-do
+for directory in ${CONTENT_DIRS}; do
   if [ -e ${WP_DIR}/${directory} ]; then
     chown -hR www-data:www-data ${WP_DIR}/${directory}
   fi

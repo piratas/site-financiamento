@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 ﻿
-=======
-﻿
->>>>>>> atualiza plugins e temas
 === WooCommerce Name Your Price ===
 
 Contributors: Kathy Darling    

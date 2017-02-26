@@ -78,7 +78,7 @@ admin/templates/forms/fields/button/group/group.html.twig	d41d8cd98f00b204e98009
 admin/templates/forms/fields/button/button.html.twig	35333d3e63b204be65c64f96fe935737
 admin/templates/forms/fields/checkboxes/checkboxes.html.twig	e8d8971d3dace64b80d4aafad705a7ad
 admin/templates/forms/fields/collection/keyvalue.html.twig	218491de01b14ed7be161efa68711dbb
-admin/templates/forms/fields/collection/list.html.twig	6fa999b0aa4883302c2947cc12cb001c
+admin/templates/forms/fields/collection/list.html.twig	afc8b357ea50dcbf89a8072348e0d0bb
 admin/templates/forms/fields/collection/list.yaml	e5eb64a5b2f8303cb2af0715108e4693
 admin/templates/forms/fields/container/set.html.twig	ee5152f517d3852958ada5690ea9e892
 admin/templates/forms/fields/container/tabs.html.twig	148774bae15a077d05cd5ce75face8d1
@@ -251,7 +251,7 @@ admin/init.php	691f0972bc643d6ae01eeda224e60ddc
 admin/settings.php	4a533fe597c34a01471857d4ec724bb7
 uninstall.php	f673934f141764ba76dce6c169d33fcb
 src/Loader.php	ca2419dbbc6aa32be63ffab39f0e3cb2
-src/RealLoader.php	8bf23879b4fea47765373d50a27051a9
+src/RealLoader.php	913f614d6f97aa197829cf27bdd0dc0e
 src/bootstrap.php	c0596c070aa6a3c63292a82f6a2feb32
 src/classes/Gantry/Admin/Controller/Html/Configurations/Assignments.php	f067a9c6afc531534c8242dc3a56e15b
 src/classes/Gantry/Admin/Controller/Html/Configurations/Layout.php	8a7ec997a11af0408984a26e2a7daead
@@ -294,7 +294,7 @@ src/classes/Gantry/Component/Assignments/AssignmentFilter.php	88b925e692d2c3b15a
 src/classes/Gantry/Component/Assignments/AssignmentsInterface.php	ab9ef29f534f2e8829d4056412d3c5d2
 src/classes/Gantry/Component/Collection/Collection.php	ac5ba1eeeee4ed4983ee235ce5f41b6b
 src/classes/Gantry/Component/Collection/CollectionInterface.php	10477d9403def2c80de2aa6a0eb50d02
-src/classes/Gantry/Component/Config/BlueprintForm.php	11a28e12100673caedbb4a53fe6b1f2c
+src/classes/Gantry/Component/Config/BlueprintForm.php	e021ce007d7607327064b1a98fe2a2ad
 src/classes/Gantry/Component/Config/BlueprintSchema.php	8d715abe3fd84803f2774a99e344c187
 src/classes/Gantry/Component/Config/CompiledBase.php	c72c992e1b0b281171b59eda78247512
 src/classes/Gantry/Component/Config/CompiledBlueprints.php	621abc031548172b47050f6532cbc89e
@@ -484,8 +484,8 @@ src/vendor/composer/installed.json	fc536764b360b37200206c0770f6e4c0
 src/vendor/composer/autoload_namespaces.php	43e30511b6a2b896842959f07375f308
 src/vendor/composer/autoload_psr4.php	6646ea6b8c5fc6fb73e399fd64050c07
 src/vendor/composer/autoload_classmap.php	b357d4b4dee78819dc0b3e736f3de257
-src/vendor/composer/autoload_static.php	26f34802ee8c194add07fcd86301f332
-src/vendor/composer/autoload_real.php	2925437b9fc37b620ce18a73fc1ee288
+src/vendor/composer/autoload_static.php	c9b2d5e62850b44ad52095564d54589a
+src/vendor/composer/autoload_real.php	e4c82add11dbcacb0e8d5ba45e9a4299
 src/vendor/composer/ClassLoader.php	d925befc389a2a2d5ecb76b81899d775
 src/vendor/erusev/parsedown/Parsedown.php	6ccd3abc62de58afdf7ca27537106625
 src/vendor/erusev/parsedown/composer.json	6dd540504772695aead5f240100dbc74
@@ -884,7 +884,7 @@ src/vendor/timber/timber/lib/Twig.php	0d2b59c1cfb250f94dbeb56ae2141c0b
 src/vendor/timber/timber/lib/URLHelper.php	38922429e87537a71223172953514a59
 src/vendor/timber/timber/lib/User.php	b3d4ad4a1715a30dff06cd084425bb9f
 src/vendor/timber/timber/composer.json	ae76d09d38abd3bf0b6113182deff86b
-src/vendor/autoload.php	f3b76213ad5b38fe0a10f38172534492
+src/vendor/autoload.php	c79bf3ed6819faed9e827ad53f69fc9b
 assets/css/font-awesome.min.css	269550530cc127b6aa5a35925a7de6ce
 assets/css/lightcase.min.css	35d140dcf674490e3b24329c4351322a
 assets/css/whoops.css	afac3c5ad7a94166ef0c93c42946fbe1
@@ -1128,6 +1128,6 @@ engines/nucleus/views/partials/messages.html.twig	30d8cd177161ef82c68c3433d8165d
 engines/nucleus/views/partials/page.html.twig	11f4c5d3a4b50ef2467cc66ad641a235
 engines/nucleus/views/partials/page_head.html.twig	3a3259470168a9ada5b0d1283f846aa3
 engines/nucleus/yarn.lock	c9f24d7a378f26bf564c814e6675fe2e
-gantry5.php	5a0e1f1192a51cc399a8f91a1eabca87
-readme.txt	78b59147cc2a9e69ae1ff7fd486f1f86
+gantry5.php	eb5dc67c10af6445b29e8fbad32ba925
+readme.txt	931942565ee1fbc9b4f0ff3610a61d19
 MD5SUMS	d41d8cd98f00b204e9800998ecf8427e

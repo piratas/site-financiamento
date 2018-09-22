@@ -2,7 +2,7 @@
 /**
  * Crowdfunding for WooCommerce - General Section Settings
  *
- * @version 2.3.2
+ * @version 2.6.0
  * @since   1.0.0
  * @author  Algoritmika Ltd.
  */
@@ -16,16 +16,19 @@ class Alg_WC_Crowdfunding_Settings_General {
 	/**
 	 * Constructor.
 	 *
-	 * @version 2.3.0
+	 * @version 2.5.0
 	 * @since   1.0.0
 	 */
-	public function __construct() {
+	function __construct() {
 
 		$this->id   = '';
 		$this->desc = __( 'General', 'crowdfunding-for-woocommerce' );
 
 		add_filter( 'woocommerce_get_sections_alg_crowdfunding',              array( $this, 'settings_section' ) );
 		add_filter( 'woocommerce_get_settings_alg_crowdfunding_' . $this->id, array( $this, 'get_settings' ), PHP_INT_MAX );
+
+		add_filter( 'admin_head',                                             array( $this, 'add_update_data_now_confirmation_js' ) );
+		add_action( 'admin_init',                                             array( $this, 'manual_products_data_update' ) );
 	}
 
 	/**
@@ -40,9 +43,46 @@ class Alg_WC_Crowdfunding_Settings_General {
 	}
 
 	/**
+	 * manual_products_data_update.
+	 *
+	 * @version 2.5.0
+	 * @since   2.5.0
+	 */
+	function manual_products_data_update() {
+		if ( isset( $_GET['alg_wc_crowdfunding_products_data_update'] ) ) {
+			do_action( 'alg_update_products_data_hook' );
+			wp_safe_redirect( remove_query_arg( 'alg_wc_crowdfunding_products_data_update' ) );
+			exit;
+		}
+	}
+
+	/**
+	 * add_update_data_now_confirmation_js.
+	 *
+	 * @version 2.5.0
+	 * @since   2.5.0
+	 */
+	function add_update_data_now_confirmation_js() {
+		if (
+			isset( $_GET['page'] ) && 'wc-settings' === $_GET['page'] &&
+			isset( $_GET['tab'] ) && 'alg_crowdfunding' === $_GET['tab']  &&
+			( ! isset( $_GET['section'] ) || '' === $_GET['section'] )
+		) {
+			echo '<script type="text/javascript">
+				window.onload = function() {
+					function alg_crowdfunding_data_update_now_confirmation() {
+						return confirm("' . __( 'This may take a while... Are you sure?', 'crowdfunding-for-woocommerce' ) . '");
+					}
+					document.getElementById("alg_crowdfunding_products_data_update_now").onclick = alg_crowdfunding_data_update_now_confirmation;
+				}
+			</script>';
+		}
+	}
+
+	/**
 	 * get_settings.
 	 *
-	 * @version 2.3.2
+	 * @version 2.6.0
 	 * @since   1.0.0
 	 */
 	function get_settings() {
@@ -52,12 +92,19 @@ class Alg_WC_Crowdfunding_Settings_General {
 			if ( '' != get_option( 'alg_crowdfunding_products_data_update_cron_time', '' ) ) {
 				$scheduled_time_diff = get_option( 'alg_crowdfunding_products_data_update_cron_time', '' ) - time();
 				if ( $scheduled_time_diff > 60 ) {
-					$desc = sprintf( __( '%s till next update.', 'crowdfunding-for-woocommerce' ), human_time_diff( get_option( 'alg_crowdfunding_products_data_update_cron_time', '' ) ) );
+					$desc = sprintf( __( '%s till next update.', 'crowdfunding-for-woocommerce' ),
+						'<strong>' . human_time_diff( get_option( 'alg_crowdfunding_products_data_update_cron_time', '' ) ) . '</strong>' );
 				} elseif ( $scheduled_time_diff > 0 ) {
-					$desc = sprintf( __( '%s seconds till next update.', 'crowdfunding-for-woocommerce' ), $scheduled_time_diff );
-				} else {
-					$desc = sprintf( __( '%s seconds since last update.', 'crowdfunding-for-woocommerce' ), -1 * $scheduled_time_diff );
+					$desc = sprintf( __( '%s seconds till next update.', 'crowdfunding-for-woocommerce' ),
+						'<strong>' . $scheduled_time_diff . '</strong>' );
 				}
+			}
+			if ( '' != get_option( 'alg_crowdfunding_products_data_update_cron_run_time', '' ) ) {
+				if ( '' != $desc ) {
+					$desc .= ' ';
+				}
+				$desc .= sprintf( __( 'Previous update triggered at %s.', 'crowdfunding-for-woocommerce' ),
+					'<strong>' . date( 'Y-m-d H:i:s', get_option( 'alg_crowdfunding_products_data_update_cron_run_time', '' ) ) . '</strong>' );
 			}
 		}
 
@@ -76,13 +123,13 @@ class Alg_WC_Crowdfunding_Settings_General {
 			array(
 				'title'     => __( 'Crowdfunding Options', 'crowdfunding-for-woocommerce' ),
 				'type'      => 'title',
-				'desc'      => ( '' != get_option( 'alg_woocommerce_crowdfunding_version', '' ) ? 'v' . get_option( 'alg_woocommerce_crowdfunding_version', '' ) : '' ),
 				'id'        => 'alg_woocommerce_crowdfunding_options',
 			),
 			array(
 				'title'     => __( 'WooCommerce Crowdfunding', 'crowdfunding-for-woocommerce' ),
-				'desc'      => '<strong>' . __( 'Enable', 'crowdfunding-for-woocommerce' ) . '</strong>',
-				'desc_tip'  => __( 'Crowdfunding Products for WooCommerce.', 'crowdfunding-for-woocommerce' ),
+				'desc'      => '<strong>' . __( 'Enable plugin', 'crowdfunding-for-woocommerce' ) . '</strong>',
+				'desc_tip'  => __( 'Crowdfunding for WooCommerce plugin', 'crowdfunding-for-woocommerce' ) .
+					( '' != get_option( 'alg_woocommerce_crowdfunding_version', '' ) ? ' v' . get_option( 'alg_woocommerce_crowdfunding_version', '' ) : '' ),
 				'id'        => 'alg_woocommerce_crowdfunding_enabled',
 				'default'   => 'yes',
 				'type'      => 'checkbox',
@@ -121,7 +168,7 @@ class Alg_WC_Crowdfunding_Settings_General {
 				'id'        => 'alg_woocommerce_crowdfunding_button_single',
 				'default'   => __( 'Back This Project', 'crowdfunding-for-woocommerce' ),
 				'type'      => 'textarea',
-				'css'       => 'width:300px;',
+				'css'       => 'width:100%;',
 			),
 			array(
 				'title'     => __( 'Default Button Label on Archive Pages', 'crowdfunding-for-woocommerce' ),
@@ -129,7 +176,7 @@ class Alg_WC_Crowdfunding_Settings_General {
 				'id'        => 'alg_woocommerce_crowdfunding_button_archives',
 				'default'   => __( 'Read More', 'crowdfunding-for-woocommerce' ),
 				'type'      => 'textarea',
-				'css'       => 'width:300px;',
+				'css'       => 'width:100%;',
 			),
 			array(
 				'type'      => 'sectionend',
@@ -143,19 +190,23 @@ class Alg_WC_Crowdfunding_Settings_General {
 			),
 			array(
 				'title'     => __( 'Message on Product Not Yet Started', 'crowdfunding-for-woocommerce' ),
-				'desc'      => sprintf( __( 'You can use shortcodes here. For example: %s.', 'crowdfunding-for-woocommerce' ), '[product_crowdfunding_time_to_start]' ),
+				'desc'      => sprintf( __( 'You can use shortcodes here. For example: %s.', 'crowdfunding-for-woocommerce' ),
+					'<code>' . '[product_crowdfunding_time_to_start]' . '</code>' ),
 				'id'        => 'alg_woocommerce_crowdfunding_message_not_started',
 				'default'   => __( '<strong>Not yet started!</strong>', 'crowdfunding-for-woocommerce' ),
 				'type'      => 'textarea',
-				'css'       => 'width:300px;',
+				'css'       => 'width:100%;height:100px;',
+				'class'     => 'widefat',
 			),
 			array(
 				'title'     => __( 'Message on Product Ended', 'crowdfunding-for-woocommerce' ),
-				'desc'      => sprintf( __( 'You can use shortcodes here. For example: %s.', 'crowdfunding-for-woocommerce' ), '[product_crowdfunding_time_remaining]' ),
+				'desc'      => sprintf( __( 'You can use shortcodes here. For example: %s.', 'crowdfunding-for-woocommerce' ),
+					'<code>' . '[product_crowdfunding_time_remaining]' . '</code>' ),
 				'id'        => 'alg_woocommerce_crowdfunding_message_ended',
 				'default'   => __( '<strong>Ended!</strong>', 'crowdfunding-for-woocommerce' ),
 				'type'      => 'textarea',
-				'css'       => 'width:300px;',
+				'css'       => 'width:100%;height:100px;',
+				'class'     => 'widefat',
 			),
 			array(
 				'type'      => 'sectionend',
@@ -179,7 +230,7 @@ class Alg_WC_Crowdfunding_Settings_General {
 				'id'        => 'alg_woocommerce_crowdfunding_variable_add_to_cart_radio_template',
 				'default'   => file_get_contents( untrailingslashit( realpath( plugin_dir_path( __FILE__ ) . '/../..' ) ) . '/includes/alg-add-to-cart-variable.php' ),
 				'type'      => 'custom_textarea',
-				'css'       => 'width:90%;height:300px;',
+				'css'       => 'width:100%;height:300px;',
 			), */
 			array(
 				'type'      => 'sectionend',
@@ -221,6 +272,7 @@ class Alg_WC_Crowdfunding_Settings_General {
 				'id'        => 'alg_crowdfunding_products_data_update',
 				'default'   => 'fifthteen',
 				'type'      => 'select',
+				'class'     => 'wc-enhanced-select',
 				'options'   => array(
 					'minutely'   => __( 'Update Every Minute', 'crowdfunding-for-woocommerce' ),
 					'fifthteen'  => __( 'Update Every Fifthteen Minutes', 'crowdfunding-for-woocommerce' ),
@@ -230,10 +282,31 @@ class Alg_WC_Crowdfunding_Settings_General {
 					'weekly'     => __( 'Update Weekly', 'crowdfunding-for-woocommerce' ),
 					'manual'     => __( 'Realtime (Not Recommended)', 'crowdfunding-for-woocommerce' ),
 				),
+				'desc'      => '<a class="button" href="' . add_query_arg( 'alg_wc_crowdfunding_products_data_update', '1' ) . '"' .
+					' id="alg_crowdfunding_products_data_update_now">' . __( 'Update data now', 'crowdfunding-for-woocommerce' ) . '</a>',
 			),
 			array(
 				'type'      => 'sectionend',
 				'id'        => 'alg_woocommerce_crowdfunding_data_update_options',
+			),
+
+			array(
+				'title'     => __( 'Advanced Options', 'crowdfunding-for-woocommerce' ),
+				'type'      => 'title',
+				'id'        => 'alg_woocommerce_crowdfunding_advanced_options',
+			),
+			array(
+				'title'     => __( 'Log', 'crowdfunding-for-woocommerce' ),
+				'desc'      => __( 'Enable', 'crowdfunding-for-woocommerce' ),
+				'desc_tip'  => sprintf( __( 'Log will be saved in %s.', 'crowdfunding-for-woocommerce' ),
+					'<a href="' . admin_url( 'admin.php?page=wc-status&tab=logs' ) . '">' . __( 'WooCommerce > Status > Logs', 'crowdfunding-for-woocommerce' ) . '</a>' ),
+				'id'        => 'alg_crowdfunding_log_enabled',
+				'default'   => 'no',
+				'type'      => 'checkbox',
+			),
+			array(
+				'type'      => 'sectionend',
+				'id'        => 'alg_woocommerce_crowdfunding_advanced_options',
 			),
 
 		);

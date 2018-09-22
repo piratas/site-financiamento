@@ -2,12 +2,43 @@
 /**
  * Crowdfunding for WooCommerce - Functions
  *
- * @version 2.3.2
+ * @version 2.6.0
  * @since   2.3.0
  * @author  Algoritmika Ltd.
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
+if ( ! function_exists( 'alg_get_product_id_or_variation_parent_id' ) ) {
+	/**
+	 * alg_get_product_id_or_variation_parent_id.
+	 *
+	 * @version 2.6.0
+	 * @since   2.4.0
+	 */
+	function alg_get_product_id_or_variation_parent_id( $_product ) {
+		if ( ! $_product || ! is_object( $_product ) ) {
+			return 0;
+		}
+		return ( version_compare( get_option( 'woocommerce_version', null ), '3.0.0', '<' ) ?
+			$_product->id : ( $_product->is_type( 'variation' ) ? $_product->get_parent_id() : $_product->get_id() ) );
+	}
+}
+
+if ( ! function_exists( 'alg_get_product_post_status' ) ) {
+	/**
+	 * alg_get_product_post_status.
+	 *
+	 * @version 2.6.0
+	 * @since   2.4.0
+	 */
+	function alg_get_product_post_status( $_product ) {
+		if ( ! $_product || ! is_object( $_product ) ) {
+			return '';
+		}
+		return ( version_compare( get_option( 'woocommerce_version', null ), '3.0.0', '<' ) ? $_product->post->post_status : $_product->get_status() );
+	}
+}
 
 if ( ! function_exists( 'alg_get_user_campaign_standard_fields' ) ) {
 	/**
@@ -245,13 +276,17 @@ if ( ! function_exists( 'alg_calculate_product_orders_data' ) ) {
 	/**
 	 * alg_calculate_product_orders_data.
 	 *
-	 * @version 2.3.1
+	 * @version 2.4.0
 	 * @since   1.0.0
 	 * @todo    recheck if "$woocommerce_loop" stuff is really needed; "global $product" - do I need this?
 	 */
 	function alg_calculate_product_orders_data( $return_value = 'total_orders', $product_id ) {
 
 		$the_product = wc_get_product( $product_id );
+
+		if ( ! $the_product ) {
+			return;
+		}
 
 		global $woocommerce_loop, $post;
 		$saved_wc_loop = $woocommerce_loop;
@@ -352,13 +387,13 @@ if ( ! function_exists( 'alg_count_crowdfunding_products' ) ) {
 	/**
 	 * alg_count_crowdfunding_products.
 	 *
-	 * @version 2.3.1
+	 * @version 2.6.0
 	 * @since   2.0.0
 	 */
 	function alg_count_crowdfunding_products( $post_id ) {
 		$args = array(
 			'post_type'      => 'product',
-			'post_status'    => 'any',
+			'post_status'    => array( 'any', 'trash' ),
 			'posts_per_page' => 3,
 			'meta_key'       => '_alg_crowdfunding_enabled',
 			'meta_value'     => 'yes',
@@ -367,5 +402,20 @@ if ( ! function_exists( 'alg_count_crowdfunding_products' ) ) {
 		);
 		$loop = new WP_Query( $args );
 		return $loop->found_posts;
+	}
+}
+
+if ( ! function_exists( 'alg_wc_crowdfunding_calculate_and_update_product_orders_data' ) ) {
+	/**
+	 * alg_wc_crowdfunding_calculate_and_update_product_orders_data.
+	 *
+	 * @version 2.6.0
+	 * @since   2.6.0
+	 */
+	function alg_wc_crowdfunding_calculate_and_update_product_orders_data( $product_id ) {
+		update_post_meta( $product_id, '_' . 'alg_crowdfunding_' . 'orders_sum',   alg_calculate_product_orders_data( 'orders_sum',   $product_id ) );
+		update_post_meta( $product_id, '_' . 'alg_crowdfunding_' . 'total_orders', alg_calculate_product_orders_data( 'total_orders', $product_id ) );
+		update_post_meta( $product_id, '_' . 'alg_crowdfunding_' . 'total_items',  alg_calculate_product_orders_data( 'total_items',  $product_id ) );
+		update_post_meta( $product_id, '_' . 'alg_crowdfunding_' . 'products_data_updated_time', time() );
 	}
 }

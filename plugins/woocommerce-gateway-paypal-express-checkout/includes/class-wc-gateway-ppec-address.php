@@ -357,7 +357,7 @@ class PayPal_Address {
 
 		$translation_table = array();
 
-		if ( 'US' == $this->_countryCode ) {
+		if ( 'US' == $this->_country ) {
 			$translation_table = array(
 				'alabama'                                 => 'AL',
 				'alaska'                                  => 'AK',
@@ -581,6 +581,59 @@ class PayPal_Address {
 				'zeeland'       => 'ZE',
 				'zuid-holland'  => 'ZH'
 			);
+		} elseif ( 'IE' == $this->_country ) {
+			$translation_table = array(
+				'co clare'     => 'CE',
+				'co cork'      => 'CK',
+				'co cavan'     => 'CN',
+				'co carlow'    => 'CW',
+				'co donegal'   => 'DL',
+				// All of these should be mapped to Dublin start
+				'co dublin'    => 'DN',
+				'dublin 1'     => 'DN',
+				'dublin 2'     => 'DN',
+				'dublin 3'     => 'DN',
+				'dublin 4'     => 'DN',
+				'dublin 5'     => 'DN',
+				'dublin 6'     => 'DN',
+				'dublin 6w'    => 'DN',
+				'dublin 7'     => 'DN',
+				'dublin 8'     => 'DN',
+				'dublin 9'     => 'DN',
+				'dublin 10'    => 'DN',
+				'dublin 11'    => 'DN',
+				'dublin 12'    => 'DN',
+				'dublin 13'    => 'DN',
+				'dublin 14'    => 'DN',
+				'dublin 15'    => 'DN',
+				'dublin 16'    => 'DN',
+				'dublin 17'    => 'DN',
+				'dublin 18'    => 'DN',
+				'dublin 20'    => 'DN',
+				'dublin 22'    => 'DN',
+				'dublin 24'    => 'DN',
+				// All of these should be mapped to Dublin end
+				'co galway'    => 'GY',
+				'co kildare'   => 'KE',
+				'co kilkenny'  => 'KK',
+				'co kerry'     => 'KY',
+				'co longford'  => 'LD',
+				'co louth'     => 'LH',
+				'co limerick'  => 'LK',
+				'co leitrim'   => 'LM',
+				'co laois'     => 'LS',
+				'co meath'     => 'MH',
+				'co monaghan'  => 'MN',
+				'co mayo'      => 'MO',
+				'co offaly'    => 'OY',
+				'co roscommon' => 'RN',
+				'co sligo'     => 'SO',
+				'co tipperary' => 'TY',
+				'co waterford' => 'WD',
+				'co westmeath' => 'WH',
+				'co wicklow'   => 'WW',
+				'co wexford'   => 'WX',
+			);
 		}
 
 		if ( array_key_exists( strtolower( trim( $this->_state ) ), $translation_table ) ) {
@@ -640,6 +693,9 @@ class PayPal_Address {
 				}
 			}
 		}
+
+		// After the state has been set, attempt to normalize (in case it comes from a PayPal response)
+		$this->normalizeState();
 
 		return $found_any;
 	}

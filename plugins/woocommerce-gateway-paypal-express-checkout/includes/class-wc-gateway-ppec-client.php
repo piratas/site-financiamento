@@ -98,7 +98,6 @@ class WC_Gateway_PPEC_Client {
 	public function get_endpoint() {
 		return sprintf(
 			'https://%s%s.paypal.com/nvp',
-
 			$this->_credential->get_endpoint_subdomain(),
 			'sandbox' === $this->_environment ? '.sandbox' : ''
 		);
@@ -114,23 +113,10 @@ class WC_Gateway_PPEC_Client {
 	 */
 	protected function _request( array $params ) {
 		try {
-			wc_gateway_ppec_log( sprintf( '%s: trying to make a request to PayPal with params: %s', __METHOD__, print_r( $params, true ) ) );
-
-			// Make sure $_credential and $_environment have been configured.
-			if ( ! $this->_credential ) {
-				throw new Exception( __( 'Missing credential', 'woocommerce-gateway-paypal-express-checkout' ), self::INVALID_CREDENTIAL_ERROR );
-			}
-
-			if ( ! is_a( $this->_credential, 'WC_Gateway_PPEC_Client_Credential' ) ) {
-				throw new Exception( __( 'Invalid credential object', 'woocommerce-gateway-paypal-express-checkout' ), self::INVALID_CREDENTIAL_ERROR );
-			}
-
-			if ( ! in_array( $this->_environment, array( 'live', 'sandbox' ) ) ) {
-				throw new Exception( __( 'Invalid environment', 'woocommerce-gateway-paypal-express-checkout' ), self::INVALID_ENVIRONMENT_ERROR );
-			}
+			$this->_validate_request();
 
 			// First, add in the necessary credential parameters.
-			$body = array_merge( $params, $this->_credential->get_request_params() );
+			$body = apply_filters( 'woocommerce_paypal_express_checkout_request_body', array_merge( $params, $this->_credential->get_request_params() ) );
 			$args = array(
 				'method'      => 'POST',
 				'body'        => $body,
@@ -142,28 +128,11 @@ class WC_Gateway_PPEC_Client {
 			// For cURL transport.
 			add_action( 'http_api_curl', array( $this->_credential, 'configure_curl' ), 10, 3 );
 
-			wc_gateway_ppec_log( sprintf( '%s: remote request to %s with args: %s', __METHOD__, $this->get_endpoint(), print_r( $args, true ) ) );
+			wc_gateway_ppec_log( sprintf( '%s: remote request to %s with params: %s', __METHOD__, $this->get_endpoint(), print_r( $body, true ) ) );
 
 			$resp = wp_safe_remote_post( $this->get_endpoint(), $args );
 
-			wc_gateway_ppec_log( sprintf( '%s: response from remote request to %s: %s', __METHOD__, $this->get_endpoint(), print_r( $resp, true ) ) );
-
-			if ( is_wp_error( $resp ) ) {
-				throw new Exception( sprintf( __( 'An error occurred while trying to connect to PayPal: %s', 'woocommerce-gateway-paypal-express-checkout' ), $resp->get_error_message() ), self::REQUEST_ERROR );
-			}
-
-			parse_str( wp_remote_retrieve_body( $resp ), $result );
-
-			if ( ! array_key_exists( 'ACK', $result ) ) {
-				throw new Exception( __( 'Malformed response received from PayPal', 'woocommerce-gateway-paypal-express-checkout' ), self::REQUEST_ERROR );
-			}
-
-			wc_gateway_ppec_log( sprintf( '%s: acknowleged response body: %s', __METHOD__, print_r( $result, true ) ) );
-
-			remove_action( 'http_api_curl', array( $this->_credential, 'configure_curl' ), 10 );
-
-			// Let the caller deals with the response.
-			return $result;
+			return $this->_process_response( $resp );
 
 		} catch ( Exception $e ) {
 
@@ -175,15 +144,64 @@ class WC_Gateway_PPEC_Client {
 				'L_ERRORCODE0'    => $e->getCode(),
 				'L_SHORTMESSAGE0' => 'Error in ' . __METHOD__,
 				'L_LONGMESSAGE0'  => $e->getMessage(),
-				'L_SEVERITYCODE0' => 'Error'
+				'L_SEVERITYCODE0' => 'Error',
 			);
 
-			wc_gateway_ppec_log( sprintf( '%s: exception is thrown while trying to make a request to PayPal: %s', __METHOD__, $e->getMessage() ) );
 			wc_gateway_ppec_log( sprintf( '%s: returns error: %s', __METHOD__, print_r( $error, true ) ) );
 
 			return $error;
-
 		}
+	}
+
+	/**
+	 * Validate request.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @throws \Exception
+	 */
+	protected function _validate_request() {
+		// Make sure $_credential and $_environment have been configured.
+		if ( ! $this->_credential ) {
+			throw new Exception( __( 'Missing credential', 'woocommerce-gateway-paypal-express-checkout' ), self::INVALID_CREDENTIAL_ERROR );
+		}
+
+		if ( ! is_a( $this->_credential, 'WC_Gateway_PPEC_Client_Credential' ) ) {
+			throw new Exception( __( 'Invalid credential object', 'woocommerce-gateway-paypal-express-checkout' ), self::INVALID_CREDENTIAL_ERROR );
+		}
+
+		if ( ! in_array( $this->_environment, array( 'live', 'sandbox' ) ) ) {
+			throw new Exception( __( 'Invalid environment', 'woocommerce-gateway-paypal-express-checkout' ), self::INVALID_ENVIRONMENT_ERROR );
+		}
+	}
+
+	/**
+	 * Process response from API.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @throws \Exception
+	 *
+	 * @param WP_Error|array Response from remote API
+	 *
+	 * @return array
+	 */
+	protected function _process_response( $response ) {
+		if ( is_wp_error( $response ) ) {
+			throw new Exception( sprintf( __( 'An error occurred while trying to connect to PayPal: %s', 'woocommerce-gateway-paypal-express-checkout' ), $response->get_error_message() ), self::REQUEST_ERROR );
+		}
+
+		parse_str( wp_remote_retrieve_body( $response ), $result );
+
+		if ( ! array_key_exists( 'ACK', $result ) ) {
+			throw new Exception( __( 'Malformed response received from PayPal', 'woocommerce-gateway-paypal-express-checkout' ), self::REQUEST_ERROR );
+		}
+
+		wc_gateway_ppec_log( sprintf( '%s: acknowleged response body: %s', __METHOD__, print_r( $result, true ) ) );
+
+		remove_action( 'http_api_curl', array( $this->_credential, 'configure_curl' ), 10 );
+
+		return $result;
 	}
 
 	/**
@@ -202,11 +220,542 @@ class WC_Gateway_PPEC_Client {
 	}
 
 	/**
+	 * Get params for SetExpressCheckout call.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param array $args {
+	 *     Context args to retrieve SetExpressCheckout parameters.
+	 *
+	 *     @type string $start_from               Start from 'cart' or 'checkout'.
+	 *     @type int    $order_id                 Order ID if $start_from is 'checkout'.
+	 *     @type bool   $create_billing_agreement Whether billing agreement creation
+	 *                                            is needed after returned from PayPal.
+	 * }
+	 *
+	 * @return array Params for SetExpressCheckout call
+	 */
+	public function get_set_express_checkout_params( array $args ) {
+		$args = wp_parse_args(
+			$args,
+			array(
+				'start_from'               => 'cart',
+				'order_id'                 => '',
+				'create_billing_agreement' => false,
+			)
+		);
+
+		$settings = wc_gateway_ppec()->settings;
+
+		$params              = array();
+		$logo_url_or_id      = $settings->logo_image_url;
+		$header_url_or_id    = $settings->header_image_url;
+		$params['LOGOIMG']   = filter_var( $logo_url_or_id, FILTER_VALIDATE_URL )   ? $logo_url_or_id   : wp_get_attachment_image_url( $logo_url_or_id, 'thumbnail' );
+		$params['HDRIMG']    = filter_var( $header_url_or_id, FILTER_VALIDATE_URL ) ? $header_url_or_id : wp_get_attachment_image_url( $header_url_or_id, 'thumbnail' );
+		$params['PAGESTYLE'] = $settings->page_style;
+		$params['BRANDNAME'] = $settings->get_brand_name();
+		$params['RETURNURL'] = $this->_get_return_url( $args );
+		$params['CANCELURL'] = $this->_get_cancel_url();
+
+		if ( wc_gateway_ppec_is_using_credit() ) {
+			$params['USERSELECTEDFUNDINGSOURCE'] = 'Finance';
+		}
+
+		if ( 'checkout' === $args['start_from'] ) {
+			$params['ADDROVERRIDE'] = '1';
+		}
+
+		if ( in_array( $settings->landing_page, array( 'Billing', 'Login' ) ) ) {
+			$params['LANDINGPAGE'] = $settings->landing_page;
+		}
+
+		if ( apply_filters( 'woocommerce_paypal_express_checkout_allow_guests', true ) ) {
+			$params['SOLUTIONTYPE'] = 'Sole';
+		}
+
+		if ( 'yes' === $settings->require_billing ) {
+			$params['REQBILLINGADDRESS'] = '1';
+		}
+
+		$params['PAYMENTREQUEST_0_PAYMENTACTION'] = $settings->get_paymentaction();
+		if ( 'yes' === $settings->instant_payments && 'sale' === $settings->get_paymentaction() ) {
+			$params['PAYMENTREQUEST_0_ALLOWEDPAYMENTMETHOD'] = 'InstantPaymentOnly';
+		}
+
+		$params['PAYMENTREQUEST_0_INSURANCEAMT'] = 0;
+		$params['PAYMENTREQUEST_0_HANDLINGAMT']  = 0;
+		$params['PAYMENTREQUEST_0_CUSTOM']       = '';
+		$params['PAYMENTREQUEST_0_INVNUM']       = '';
+		$params['PAYMENTREQUEST_0_CURRENCYCODE'] = get_woocommerce_currency();
+
+		switch ( $args['start_from'] ) {
+			case 'checkout':
+				$details = $this->_get_details_from_order( $args['order_id'] );
+				break;
+			case 'cart':
+				$details = $this->_get_details_from_cart();
+				break;
+		}
+
+		$params = array_merge(
+			$params,
+			array(
+				'PAYMENTREQUEST_0_AMT'          => $details['order_total'],
+				'PAYMENTREQUEST_0_ITEMAMT'      => $details['total_item_amount'],
+				'PAYMENTREQUEST_0_SHIPPINGAMT'  => $details['shipping'],
+				'PAYMENTREQUEST_0_TAXAMT'       => $details['order_tax'],
+				'PAYMENTREQUEST_0_SHIPDISCAMT'  => $details['ship_discount_amount'],
+				'NOSHIPPING'                    => WC_Gateway_PPEC_Plugin::needs_shipping() ? 0 : 1,
+			)
+		);
+
+		if ( $args['create_billing_agreement'] ) {
+			$params['L_BILLINGTYPE0']                 = 'MerchantInitiatedBillingSingleAgreement';
+			$params['L_BILLINGAGREEMENTDESCRIPTION0'] = $this->_get_billing_agreement_description();
+			$params['L_BILLINGAGREEMENTCUSTOM0']      = '';
+		}
+
+		if ( ! empty( $details['shipping_address'] ) ) {
+			$params = array_merge(
+				$params,
+				$details['shipping_address']->getAddressParams( 'PAYMENTREQUEST_0_SHIPTO' )
+			);
+		}
+
+		if ( ! empty( $details['items'] ) ) {
+			$count = 0;
+			foreach ( $details['items'] as $line_item_key => $values ) {
+				$line_item_params = array(
+					'L_PAYMENTREQUEST_0_NAME' . $count => $values['name'],
+					'L_PAYMENTREQUEST_0_DESC' . $count => ! empty( $values['description'] ) ? strip_tags( $values['description'] ) : '',
+					'L_PAYMENTREQUEST_0_QTY' . $count  => $values['quantity'],
+					'L_PAYMENTREQUEST_0_AMT' . $count  => $values['amount'],
+				);
+
+				$params = array_merge( $params, $line_item_params );
+				$count++;
+			}
+		}
+
+		return $params;
+	}
+
+	/**
+	 * Get return URL.
+	 *
+	 * The URL to return from express checkout.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param array $context_args {
+	 *     Context args to retrieve SetExpressCheckout parameters.
+	 *
+	 *     @type string $start_from               Start from 'cart' or 'checkout'.
+	 *     @type int    $order_id                 Order ID if $start_from is 'checkout'.
+	 *     @type bool   $create_billing_agreement Whether billing agreement creation
+	 *                                            is needed after returned from PayPal.
+	 * }
+	 *
+	 * @return string Return URL
+	 */
+	protected function _get_return_url( array $context_args ) {
+		$query_args = array(
+			'woo-paypal-return' => 'true',
+		);
+		if ( $context_args['create_billing_agreement'] ) {
+			$query_args['create-billing-agreement'] = 'true';
+		}
+
+		return add_query_arg( $query_args, wc_get_checkout_url() );
+	}
+
+	/**
+	 * Get cancel URL.
+	 *
+	 * The URL to return when canceling the express checkout.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return string Cancel URL
+	 */
+	protected function _get_cancel_url() {
+		return add_query_arg( 'woo-paypal-cancel', 'true', wc_get_cart_url() );
+	}
+
+	/**
+	 * Get billing agreement description to be passed to PayPal.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return string Billing agreement description
+	 */
+	protected function _get_billing_agreement_description() {
+		/* translators: placeholder is blogname */
+		$description = sprintf( _x( 'Orders with %s', 'data sent to PayPal', 'woocommerce-subscriptions'  ), get_bloginfo( 'name' ) );
+
+		if ( strlen( $description  ) > 127  ) {
+			$description = substr( $description, 0, 124  ) . '...';
+		}
+
+		return html_entity_decode( $description, ENT_NOQUOTES, 'UTF-8' );
+	}
+
+	/**
+	 * Get extra line item when for subtotal mismatch.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param float $amount Item's amount
+	 *
+	 * @return array Line item
+	 */
+	protected function _get_extra_offset_line_item( $amount ) {
+		$settings = wc_gateway_ppec()->settings;
+		$decimals = $settings->get_number_of_decimal_digits();
+
+		return array(
+			'name'        => 'Line Item Amount Offset',
+			'description' => 'Adjust cart calculation discrepancy',
+			'quantity'    => 1,
+			'amount'      => round( $amount, $decimals ),
+		);
+	}
+
+	/**
+	 * Get extra line item when for discount.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param float $amount Item's amount
+	 *
+	 * @return array Line item
+	 */
+	protected function _get_extra_discount_line_item( $amount ) {
+		$settings = wc_gateway_ppec()->settings;
+		$decimals = $settings->get_number_of_decimal_digits();
+
+		return  array(
+			'name'        => 'Discount',
+			'description' => 'Discount Amount',
+			'quantity'    => 1,
+			'amount'      => '-' . round( $amount, $decimals ),
+		);
+	}
+
+	/**
+	 * Get details, not params to be passed in PayPal API request, from cart contents.
+	 *
+	 * This is the details when buyer is checking out from cart page.
+	 *
+	 * @since 1.2.0
+	 * @version 1.2.1
+	 *
+	 * @return array Order details
+	 */
+	protected function _get_details_from_cart() {
+		$settings = wc_gateway_ppec()->settings;
+
+		$decimals      = $settings->get_number_of_decimal_digits();
+		$rounded_total = $this->_get_rounded_total_in_cart();
+		$discounts     = WC()->cart->get_cart_discount_total();
+
+		$details = array(
+			'total_item_amount' => round( WC()->cart->cart_contents_total, $decimals ) + $discounts,
+			'order_tax'         => round( WC()->cart->tax_total + WC()->cart->shipping_tax_total, $decimals ),
+			'shipping'          => round( WC()->cart->shipping_total, $decimals ),
+			'items'             => $this->_get_paypal_line_items_from_cart(),
+		);
+
+		return $this->get_details( $details, $discounts, $rounded_total, WC()->cart->total );
+	}
+
+	/**
+	 * Get line items from cart contents.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return array Line items
+	 */
+	protected function _get_paypal_line_items_from_cart() {
+		$settings = wc_gateway_ppec()->settings;
+		$decimals = $settings->get_number_of_decimal_digits();
+
+		$items = array();
+		foreach ( WC()->cart->cart_contents as $cart_item_key => $values ) {
+			$amount = round( $values['line_total'] / $values['quantity'] , $decimals );
+
+			if ( version_compare( WC_VERSION, '3.0', '<' ) ) {
+				$name = $values['data']->post->post_title;
+				$description = $values['data']->post->post_content;
+			} else {
+				$product = $values['data'];
+				$name = $product->get_name();
+				$description = $product->get_description();
+			}
+
+			$item   = array(
+				'name'        => $name,
+				'description' => $description,
+				'quantity'    => $values['quantity'],
+				'amount'      => $amount,
+			);
+
+			$items[] = $item;
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Get rounded total of items in cart.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return float Rounded total in cart
+	 */
+	protected function _get_rounded_total_in_cart() {
+		$settings = wc_gateway_ppec()->settings;
+		$decimals = $settings->get_number_of_decimal_digits();
+
+		$rounded_total = 0;
+		foreach ( WC()->cart->cart_contents as $cart_item_key => $values ) {
+			$amount         = round( $values['line_subtotal'] / $values['quantity'] , $decimals );
+			$rounded_total += round( $amount * $values['quantity'], $decimals );
+		}
+
+		return $rounded_total;
+	}
+
+	/**
+	 * Get details from populated price array
+	 *
+	 * @since 1.4.1
+	 *
+	 * @param array $details Prices
+	 *
+	 * @return array Details
+	 */
+	protected function get_details( $details, $discounts, $rounded_total, $total ) {
+		$settings = wc_gateway_ppec()->settings;
+		$decimals = $settings->get_number_of_decimal_digits();
+
+		$discounts = round( $discounts, $decimals );
+
+		$details['order_total'] = round(
+			$details['total_item_amount'] + $details['order_tax'] + $details['shipping'],
+			$decimals
+		);
+
+		// Compare WC totals with what PayPal will calculate to see if they match.
+		// if they do not match, check to see what the merchant would like to do.
+		// Options are to remove line items or add a line item to adjust for
+		// the difference.
+		$diff = 0;
+
+		if ( $details['total_item_amount'] != $rounded_total ) {
+			if ( 'add' === $settings->get_subtotal_mismatch_behavior() ) {
+				// Add line item to make up different between WooCommerce
+				// calculations and PayPal calculations.
+				$diff = round( $details['total_item_amount'] - $rounded_total, $decimals );
+				if ( abs( $diff ) > 0.000001 && 0.0 !== (float) $diff ) {
+					$extra_line_item = $this->_get_extra_offset_line_item( $diff );
+
+					$details['items'][]            = $extra_line_item;
+					$details['total_item_amount'] += $extra_line_item['amount'];
+					$details['order_total']       += $extra_line_item['amount'];
+				}
+			} else {
+				// Omit line items altogether.
+				unset( $details['items'] );
+			}
+		}
+
+		// Enter discount shenanigans. Item total cannot be 0 so make modifications
+		// accordingly.
+		if ( $details['total_item_amount'] == $discounts ) {
+			// Omit line items altogether.
+			unset( $details['items'] );
+		}
+
+		$details['ship_discount_amount'] = 0;
+
+		// AMT
+		$details['order_total']       = $details['order_total'] - $discounts;
+
+		// ITEMAMT
+		$details['total_item_amount'] = $details['total_item_amount'] - $discounts;
+
+		// If the totals don't line up, adjust the tax to make it work (it's
+		// probably a tax mismatch).
+		$wc_order_total = round( $total, $decimals );
+		$discounted_total = $details['order_total'];
+
+		if ( $wc_order_total != $discounted_total ) {
+			// tax cannot be negative
+			if ( $discounted_total < $wc_order_total ) {
+				$details['order_tax'] += $wc_order_total - $discounted_total;
+				$details['order_tax'] = round( $details['order_tax'], $decimals );
+			} else {
+				$details['ship_discount_amount'] += $wc_order_total - $discounted_total;
+				$details['ship_discount_amount'] = round( $details['ship_discount_amount'], $decimals );
+			}
+
+			$details['order_total'] = $wc_order_total;
+		}
+
+		if ( ! is_numeric( $details['shipping'] ) ) {
+			$details['shipping'] = 0;
+		}
+
+		$lisum = 0;
+
+		if ( ! empty( $details['items'] ) ) {
+			foreach ( $details['items'] as $li => $values ) {
+				$lisum += $values['quantity'] * $values['amount'];
+			}
+		}
+
+		if ( abs( $lisum ) > 0.000001 && 0.0 !== (float) $diff ) {
+			$details['items'][] = $this->_get_extra_offset_line_item( $details['total_item_amount'] - $lisum );
+		}
+
+		return $details;
+	}
+
+	/**
+	 * Get details from given order_id.
+	 *
+	 * This is the details when buyer is checking out from checkout page.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param int $order_id Order ID
+	 *
+	 * @return array Order details
+	 */
+	protected function _get_details_from_order( $order_id ) {
+		$order    = wc_get_order( $order_id );
+		$settings = wc_gateway_ppec()->settings;
+
+		$decimals      = $settings->is_currency_supports_zero_decimal() ? 0 : 2;
+		$rounded_total = $this->_get_rounded_total_in_order( $order );
+		$discounts     = $order->get_total_discount();
+
+		$details = array(
+			'total_item_amount' => round( $order->get_subtotal(), $decimals ) + $discounts,
+			'order_tax'         => round( $order->get_total_tax(), $decimals ),
+			'shipping'          => round( ( version_compare( WC_VERSION, '3.0', '<' ) ? $order->get_total_shipping() : $order->get_shipping_total() ), $decimals ),
+			'items'             => $this->_get_paypal_line_items_from_order( $order ),
+		);
+
+		$details = $this->get_details( $details, $order->get_total_discount(), $rounded_total, $order->get_total() );
+
+		// PayPal shipping address from order.
+		$shipping_address = new PayPal_Address;
+
+		$old_wc = version_compare( WC_VERSION, '3.0', '<' );
+
+		if ( ( $old_wc && ( $order->shipping_address_1 || $order->shipping_address_2 ) ) || ( ! $old_wc && $order->has_shipping_address() ) ) {
+			$shipping_first_name = $old_wc ? $order->shipping_first_name : $order->get_shipping_first_name();
+			$shipping_last_name  = $old_wc ? $order->shipping_last_name  : $order->get_shipping_last_name();
+			$shipping_address_1  = $old_wc ? $order->shipping_address_1  : $order->get_shipping_address_1();
+			$shipping_address_2  = $old_wc ? $order->shipping_address_2  : $order->get_shipping_address_2();
+			$shipping_city       = $old_wc ? $order->shipping_city       : $order->get_shipping_city();
+			$shipping_state      = $old_wc ? $order->shipping_state      : $order->get_shipping_state();
+			$shipping_postcode   = $old_wc ? $order->shipping_postcode   : $order->get_shipping_postcode();
+			$shipping_country    = $old_wc ? $order->shipping_country    : $order->get_shipping_country();
+		} else {
+			// Fallback to billing in case no shipping methods are set. The address returned from PayPal
+			// will be stored in the order as billing.
+			$shipping_first_name = $old_wc ? $order->billing_first_name : $order->get_billing_first_name();
+			$shipping_last_name  = $old_wc ? $order->billing_last_name  : $order->get_billing_last_name();
+			$shipping_address_1  = $old_wc ? $order->billing_address_1  : $order->get_billing_address_1();
+			$shipping_address_2  = $old_wc ? $order->billing_address_2  : $order->get_billing_address_2();
+			$shipping_city       = $old_wc ? $order->billing_city       : $order->get_billing_city();
+			$shipping_state      = $old_wc ? $order->billing_state      : $order->get_billing_state();
+			$shipping_postcode   = $old_wc ? $order->billing_postcode   : $order->get_billing_postcode();
+			$shipping_country    = $old_wc ? $order->billing_country    : $order->get_billing_country();
+		}
+
+		$shipping_address->setName( $shipping_first_name . ' ' . $shipping_last_name );
+		$shipping_address->setStreet1( $shipping_address_1 );
+		$shipping_address->setStreet2( $shipping_address_2 );
+		$shipping_address->setCity( $shipping_city );
+		$shipping_address->setState( $shipping_state );
+		$shipping_address->setZip( $shipping_postcode );
+
+		// In case merchant only expects domestic shipping and hides shipping
+		// country, fallback to base country.
+		//
+		// @see https://github.com/woothemes/woocommerce-gateway-paypal-express-checkout/issues/139
+		if ( empty( $shipping_country ) ) {
+			$shipping_country = WC()->countries->get_base_country();
+		}
+		$shipping_address->setCountry( $shipping_country );
+
+		$details['shipping_address'] = $shipping_address;
+
+		return $details;
+	}
+
+	/**
+	 * Get line items from given order.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param int|WC_Order $order Order ID or order object
+	 *
+	 * @return array Line items
+	 */
+	protected function _get_paypal_line_items_from_order( $order ) {
+		$settings = wc_gateway_ppec()->settings;
+		$decimals = $settings->get_number_of_decimal_digits();
+		$order    = wc_get_order( $order );
+
+		$items = array();
+		foreach ( $order->get_items() as $cart_item_key => $values ) {
+			$amount = round( $values['line_subtotal'] / $values['qty'] , $decimals );
+			$item   = array(
+				'name'     => $values['name'],
+				'quantity' => $values['qty'],
+				'amount'   => $amount,
+			);
+
+			$items[] = $item;
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Get rounded total of a given order.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param int|WC_Order Order ID or order object
+	 *
+	 * @return float
+	 */
+	protected function _get_rounded_total_in_order( $order ) {
+		$settings = wc_gateway_ppec()->settings;
+		$decimals = $settings->get_number_of_decimal_digits();
+		$order    = wc_get_order( $order );
+
+		$rounded_total = 0;
+		foreach ( $order->get_items() as $cart_item_key => $values ) {
+			$amount         = round( $values['line_subtotal'] / $values['qty'] , $decimals );
+			$rounded_total += round( $amount * $values['qty'], $decimals );
+		}
+
+		return $rounded_total;
+	}
+
+	/**
 	 * Get details from a given token.
 	 *
 	 * @see https://developer.paypal.com/docs/classic/api/merchant/GetExpressCheckoutDetails_API_Operation_NVP/
 	 *
-	 * @param  array $params NVP params
+	 * @param  string $token Token from SetExpressCheckout response
 	 * @return array         NVP response
 	 */
 	public function get_express_checkout_details( $token ) {
@@ -229,12 +778,200 @@ class WC_Gateway_PPEC_Client {
 	 * @param  array $params NVP params
 	 * @return array         NVP response
 	 */
-	public function do_express_checkout_payment( $params ) {
+	public function do_express_checkout_payment( array $params ) {
 		$params['METHOD']       = 'DoExpressCheckoutPayment';
 		$params['VERSION']      = self::API_VERSION;
 		$params['BUTTONSOURCE'] = 'WooThemes_EC';
 
 		return $this->_request( $params );
+	}
+
+	/**
+	 * Get params for DoExpressCheckoutPayment call.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param array $args Args
+	 *
+	 * @return array Params for DoExpressCheckoutPayment call
+	 */
+	public function get_do_express_checkout_params( array $args ) {
+		$settings     = wc_gateway_ppec()->settings;
+		$order        = wc_get_order( $args['order_id'] );
+
+		$old_wc       = version_compare( WC_VERSION, '3.0', '<' );
+		$order_id     = $old_wc ? $order->id : $order->get_id();
+		$order_number = $order->get_order_number();
+		$details      = $this->_get_details_from_order( $order_id );
+		$order_key    = $old_wc ? $order->order_key : $order->get_order_key();
+
+		$params = array(
+			'TOKEN'                          => $args['token'],
+			'PAYERID'                        => $args['payer_id'],
+			'PAYMENTREQUEST_0_AMT'           => $details['order_total'],
+			'PAYMENTREQUEST_0_ITEMAMT'       => $details['total_item_amount'],
+			'PAYMENTREQUEST_0_SHIPPINGAMT'   => $details['shipping'],
+			'PAYMENTREQUEST_0_TAXAMT'        => $details['order_tax'],
+			'PAYMENTREQUEST_0_SHIPDISCAMT'   => $details['ship_discount_amount'],
+			'PAYMENTREQUEST_0_INSURANCEAMT'  => 0,
+			'PAYMENTREQUEST_0_HANDLINGAMT'   => 0,
+			'PAYMENTREQUEST_0_CURRENCYCODE'  => get_woocommerce_currency(),
+			'PAYMENTREQUEST_0_NOTIFYURL'     => WC()->api_request_url( 'WC_Gateway_PPEC' ),
+			'PAYMENTREQUEST_0_PAYMENTACTION' => $settings->get_paymentaction(),
+			'PAYMENTREQUEST_0_INVNUM'        => $settings->invoice_prefix . $order->get_order_number(),
+			'PAYMENTREQUEST_0_CUSTOM'        => json_encode( array(
+				'order_id'     => $order_id,
+				'order_number' => $order_number,
+				'order_key'    => $order_key,
+			) ),
+			'NOSHIPPING'                     => WC_Gateway_PPEC_Plugin::needs_shipping() ? 0 : 1,
+		);
+
+		if ( WC_Gateway_PPEC_Plugin::needs_shipping() && ! empty( $details['shipping_address'] ) ) {
+			$params = array_merge(
+				$params,
+				$details['shipping_address']->getAddressParams( 'PAYMENTREQUEST_0_SHIPTO' )
+			);
+		}
+
+		if ( ! empty( $details['items'] ) ) {
+			$count = 0;
+			foreach ( $details['items'] as $line_item_key => $values ) {
+				$line_item_params = array(
+					'L_PAYMENTREQUEST_0_NAME' . $count => $values['name'],
+					'L_PAYMENTREQUEST_0_DESC' . $count => ! empty( $values['description'] ) ? strip_tags( $values['description'] ) : '',
+					'L_PAYMENTREQUEST_0_QTY' . $count  => $values['quantity'],
+					'L_PAYMENTREQUEST_0_AMT' . $count  => $values['amount'],
+				);
+
+				$params = array_merge( $params, $line_item_params );
+				$count++;
+			}
+		}
+
+		return $params;
+	}
+
+	/**
+	 * Creates a billing agreement with a PayPal account holder.
+	 *
+	 * Used for subscription products in the purchase.
+	 *
+	 * @see https://developer.paypal.com/docs/classic/api/merchant/CreateBillingAgreement_API_Operation_NVP/
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param string $token Token from SetExpressCheckout response
+	 */
+	public function create_billing_agreement( $token ) {
+		$params = array(
+			'METHOD'  => 'CreateBillingAgreement',
+			'VERSION' => self::API_VERSION,
+			'TOKEN'   => $token,
+		);
+
+		return $this->_request( $params );
+	}
+
+	/**
+	 * Updates or deletes a billing agreement.
+	 *
+	 * @see https://developer.paypal.com/docs/classic/api/merchant/BAUpdate_API_Operation_NVP/
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param string $billing_agreement_id Billing agreement ID
+	 */
+	public function update_billing_agreement( $billing_agreement_id ) {
+		$params = array(
+			'METHOD'      => 'BillAgreementUpdate',
+			'VERSION'     => self::API_VERSION,
+			'REFERENCEID' => $billing_agreement_id,
+		);
+	}
+
+	/**
+	 * Processes a payment from a buyer's account, which is identified by a
+	 * previous transaction
+	 *
+	 * @see https://developer.paypal.com/docs/classic/api/merchant/DoReferenceTransaction_API_Operation_NVP/
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param  array $params NVP params
+	 * @return array         NVP response
+	 */
+	public function do_reference_transaction( array $params ) {
+		$params['METHOD']       = 'DoReferenceTransaction';
+		$params['VERSION']      = self::API_VERSION;
+		$params['BUTTONSOURCE'] = 'WooThemes_EC';
+
+		return $this->_request( $params );
+	}
+
+	/**
+	 * Get params for DoReferenceTransaction call.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param array $args Args
+	 *
+	 * @return array Params for DoReferenceTransaction call
+	 */
+	public function get_do_reference_transaction_params( array $args ) {
+		$settings = wc_gateway_ppec()->settings;
+		$order     = wc_get_order( $args['order_id'] );
+
+		$old_wc    = version_compare( WC_VERSION, '3.0', '<' );
+		$order_id  = $old_wc ? $order->id : $order->get_id();
+		$details   = $this->_get_details_from_order( $order_id );
+		$order_key = $old_wc ? $order->order_key : $order->get_order_key();
+
+		$params = array(
+			'REFERENCEID'   => $args['reference_id'],
+			'AMT'           => $args['amount'],
+			'ITEMAMT'       => $details['total_item_amount'],
+			'SHIPPINGAMT'   => $details['shipping'],
+			'TAXAMT'        => $details['order_tax'],
+			'SHIPDISCAMT'   => $details['ship_discount_amount'],
+			'INSURANCEAMT'  => 0,
+			'HANDLINGAMT'   => 0,
+			'CURRENCYCODE'  => get_woocommerce_currency(),
+			'NOTIFYURL'     => WC()->api_request_url( 'WC_Gateway_PPEC' ),
+			'PAYMENTACTION' => $settings->get_paymentaction(),
+			'INVNUM'        => $settings->invoice_prefix . $order->get_order_number(),
+			'CUSTOM'        => json_encode( array(
+				'order_id'  => $order_id,
+				'order_key' => $order_key,
+			) ),
+		);
+
+		if ( ! empty( $details['shipping_address'] ) ) {
+			$params = array_merge(
+				$params,
+				$details['shipping_address']->getAddressParams( 'SHIPTO' )
+			);
+
+			$params['SHIPTOCOUNTRY'] = $params['SHIPTOCOUNTRYCODE'];
+			unset( $params['SHIPTOCOUNTRYCODE'] );
+		}
+
+		if ( ! empty( $details['items'] ) ) {
+			$count = 0;
+			foreach ( $details['items'] as $line_item_key => $values ) {
+				$line_item_params = array(
+					'L_NAME' . $count => $values['name'],
+					'L_DESC' . $count => ! empty( $values['description'] ) ? strip_tags( $values['description'] ) : '',
+					'L_QTY' . $count  => $values['quantity'],
+					'L_AMT' . $count  => $values['amount'],
+				);
+
+				$params = array_merge( $params, $line_item_params );
+				$count++;
+			}
+		}
+
+		return $params;
 	}
 
 	public function do_express_checkout_capture( $params ) {
@@ -330,7 +1067,7 @@ class WC_Gateway_PPEC_Client {
 			'RETURNURL'         => home_url( '/' ),
 			'CANCELURL'         => home_url( '/' ),
 			'REQBILLINGADDRESS' => '1',
-			'AMT'               => '1.00'
+			'AMT'               => '1.00',
 		);
 		$result = $this->set_express_checkout( $req );
 
@@ -352,5 +1089,22 @@ class WC_Gateway_PPEC_Client {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Checks whether response indicates a successful operation.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param array $response NVP response
+	 *
+	 * @return bool Returns true if response indicates a successful operation
+	 */
+	public function response_has_success_status( $response ) {
+		return (
+			isset( $response['ACK'] )
+			&&
+			in_array( $response['ACK'], array( 'Success', 'SuccessWithWarning' ) )
+		);
 	}
 }

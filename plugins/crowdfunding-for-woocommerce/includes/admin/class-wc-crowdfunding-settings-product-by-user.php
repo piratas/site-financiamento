@@ -2,7 +2,7 @@
 /**
  * Crowdfunding for WooCommerce - Product by User Section Settings
  *
- * @version 2.3.2
+ * @version 2.6.0
  * @since   2.3.0
  * @author  Algoritmika Ltd.
  */
@@ -64,7 +64,7 @@ class Alg_WC_Crowdfunding_Settings_Product_By_User {
 	/**
 	 * add_settings.
 	 *
-	 * @version 2.3.2
+	 * @version 2.6.0
 	 * @since   2.3.0
 	 */
 	function add_settings() {
@@ -158,6 +158,7 @@ class Alg_WC_Crowdfunding_Settings_Product_By_User {
 					'id'       => 'alg_wc_crowdfunding_product_by_user_product_type',
 					'default'  => 'simple',
 					'type'     => 'select',
+					'class'    => 'wc-enhanced-select',
 					'options'  => array(
 						'simple'       => __( 'Simple', 'crowdfunding-for-woocommerce' ),
 						'open_pricing' => __( 'Open Pricing', 'crowdfunding-for-woocommerce' ),
@@ -169,6 +170,7 @@ class Alg_WC_Crowdfunding_Settings_Product_By_User {
 					'id'       => 'alg_wc_crowdfunding_product_by_user_status',
 					'default'  => 'draft',
 					'type'     => 'select',
+					'class'    => 'wc-enhanced-select',
 					'options'  => get_post_statuses(),
 				),
 				array(
@@ -202,14 +204,14 @@ class Alg_WC_Crowdfunding_Settings_Product_By_User {
 					'id'       => 'alg_wc_crowdfunding_product_by_user_message_product_successfully_added',
 					'default'  => __( '"%product_title%" successfully added!', 'crowdfunding-for-woocommerce' ),
 					'type'     => 'text',
-					'css'      => 'width:300px;',
+					'css'      => 'width:100%;',
 				),
 				array(
 					'title'    => __( 'Message: Campaign Successfully Edited', 'crowdfunding-for-woocommerce' ),
 					'id'       => 'alg_wc_crowdfunding_product_by_user_message_product_successfully_edited',
 					'default'  => __( '"%product_title%" successfully edited!', 'crowdfunding-for-woocommerce' ),
 					'type'     => 'text',
-					'css'      => 'width:300px;',
+					'css'      => 'width:100%;',
 				),
 				array(
 					'type'     => 'sectionend',

@@ -1,9 +1,9 @@
 === WooCommerce PayPal Express Checkout Payment Gateway ===
-Contributors: automattic, woothemes, akeda, dwainm, royho, allendav, slash1andy, woosteve, spraveenitpro, mikedmoore, fernashes, shellbeezy, danieldudzic, mikaey
+Contributors: automattic, woothemes, akeda, dwainm, royho, allendav, slash1andy, woosteve, spraveenitpro, mikedmoore, fernashes, shellbeezy, danieldudzic, mikaey, fullysupportedphil, dsmithweb, corsonr, bor0, zandyring
 Tags: ecommerce, e-commerce, commerce, woothemes, wordpress ecommerce, store, sales, sell, shop, shopping, cart, checkout, configurable, paypal
 Requires at least: 4.4
-Tested up to: 4.4
-Stable tag: 1.1.2
+Tested up to: 4.9.0
+Stable tag: 1.5.1
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -84,6 +84,84 @@ https://gist.github.com/mikejolley/ad2ecc286c9ad6cefbb7065ba6dfef48
 3. Checkout with PayPal directly from the Cart.
 
 == Changelog ==
+
+= 1.5.1 =
+* Add   - Hooks for Settings.
+* Fix   - Missing Settings link on Plugins page.
+* Fix   - Use correct image URL for PayPal image logo.
+* Tweak - Default to signature method if certificate missing, rather than other way around.
+
+= 1.5.0 =
+* Add   - PayPal credit is now available on checkout.
+* Fix   - WC 3.3 compatibility.
+* Add   - Ability to select existing / upload new image(s) for logo / header fields.
+* Fix   - Shipping address overriden when PayPal returns billing address.
+
+= 1.4.7 =
+* Fix   - Issue with missing paypal session information.
+* Fix   - Dependency error when using LibreSSL.
+* Fix   - Additional compatibility with shipping plugins
+* Fix   - Issue where deprecated `WC_Cart::get_cart_url` is being used.
+* Tweak - Makes admin notification dismissible.
+
+= 1.4.6 =
+* Fix   - Coupon related PayPal error 10413.
+
+= 1.4.5 =
+* Fix   - Title/Description fields in the settings should appear based on Enable PayPal Express Checkout.
+* Add   - Invoice Prefix now has the ability to be empty.
+* Fix   - Additional compatibility fixes for line items.
+* Fix   - PHP notice for Subscription id.
+
+= 1.4.4 =
+* Fix   - PayPal error (10431).
+* Fix   - PHP notices.
+
+= 1.4.3 =
+* Fix   - Refunds not working on authorize then captured transactions.
+* Fix   - Checkout on single product available before variations are chosen.
+* Fix   - Not Returning PayPal Transaction Fee.
+* Fix   - 10431 (Item Amount Invalid at Checkout) error with discounts.
+* Fix   - Phone not returned and "Require Phone Number" setting not working.
+
+= 1.4.2 =
+* Fix   - _paypal_status on Authorize transactions not updating to processing after capture.
+* Fix   - 10413 (The totals of the cart item amounts do not match order amounts) error with discounts.
+* Fix   - Shipping Address being required on Virtual products.
+
+= 1.4.1 =
+* Fix   - Properly calculate whether Billing phone is required or not.
+* Fix   - Set NOSHIPPING based on product shipping requiredness (e.g. virtual products do not need shipping, etc).
+
+= 1.4.0 =
+* Tweak - Use shipping discount instead of tax when adjustment negative.
+* Fix   - Cannot process refunds on "authorize" transactions.
+* Add   - Option for displaying express checkout button on the product page.
+* Fix   - If there are no shipping options in WooCommerce, PayPal doesn't pass a shipping address to WC.
+* Add   - Option to set Billing phone number mandatory.
+* Add   - Option to disable checkout with PayPal button on Cart page.
+* Fix   - Trigger required shipping cost before checkout.
+
+= 1.3.0 =
+* Fix - Fatal Error calling is_main_query.
+* Fix - Customer invoice email doesn't allow payment with PPEC.
+* Fix - Double stock reduction.
+* Fix - Payment automatically goes to complete when payment action set to Authorize.
+
+= 1.2.1 =
+* Fix - Avoid plugin links notice when WooCommerce is not active - props rellect
+* Fix - Do not show this gateway when the cart amount is zero
+* Fix - Fix 10413 error that prevents checking out with a coupon
+* Fix - Filter default address fields to ensure they are not required
+
+= 1.2.0 =
+* Fix - Prevent conflict with other gateways.
+* Fix - Compatibility with WooCommerce 3.0, including ensuring the customer address is saved correctly.
+
+= 1.1.3 =
+* Fix   - Guest users can checkout without giving shipping information when required.
+* Fix   - Modal popup not working properly. Changed to full page redirect with a hook to add back the modal/popup.
+* Tweak - Guest checkout is on by default. Should be turned off by using this filter: woocommerce_paypal_express_checkout_allow_guests.
 
 = 1.1.2 =
 * Fix - Make sure translations are loaded properly.

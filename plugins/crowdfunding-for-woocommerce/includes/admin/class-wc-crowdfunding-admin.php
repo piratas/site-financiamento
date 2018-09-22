@@ -2,7 +2,7 @@
 /**
  * Crowdfunding for WooCommerce - Admin
  *
- * @version 2.3.3
+ * @version 2.6.0
  * @since   1.0.0
  * @author  Algoritmika Ltd.
  */
@@ -16,9 +16,9 @@ class Alg_WC_Crowdfunding_Admin {
 	/**
 	 * Constructor.
 	 *
-	 * @version 2.1.0
+	 * @version 2.6.0
 	 */
-	public function __construct() {
+	function __construct() {
 
 		$this->id = 'crowdfunding_admin';
 
@@ -27,8 +27,24 @@ class Alg_WC_Crowdfunding_Admin {
 			add_action( 'save_post_product', array( $this, 'save_meta_box' ), PHP_INT_MAX, 2 );
 			add_action( 'admin_notices',     array( $this, 'admin_notices' ) );
 			// Admin "Crowdfunding" column
-			add_filter( 'manage_edit-product_columns', array( $this, 'add_product_column_is_crowdfunding' ), PHP_INT_MAX );
+			add_filter( 'manage_edit-product_columns',        array( $this, 'add_product_column_is_crowdfunding' ),    PHP_INT_MAX );
 			add_action( 'manage_product_posts_custom_column', array( $this, 'render_product_column_is_crowdfunding' ), PHP_INT_MAX );
+			// Single product data update
+			add_action( 'admin_init', array( $this, 'manual_single_product_data_update' ) );
+		}
+	}
+
+	/**
+	 * manual_single_product_data_update.
+	 *
+	 * @version 2.6.0
+	 * @since   2.6.0
+	 */
+	function manual_single_product_data_update() {
+		if ( isset( $_GET['alg_wc_crowdfunding_update_product_data'] ) ) {
+			alg_wc_crowdfunding_calculate_and_update_product_orders_data( $_GET['alg_wc_crowdfunding_update_product_data'] );
+			wp_safe_redirect( remove_query_arg( 'alg_wc_crowdfunding_update_product_data' ) );
+			exit;
 		}
 	}
 
@@ -60,7 +76,7 @@ class Alg_WC_Crowdfunding_Admin {
 	/**
 	 * save_meta_box.
 	 *
-	 * @version 2.3.1
+	 * @version 2.6.0
 	 * @since   2.0.0
 	 */
 	function save_meta_box( $post_id, $post ) {
@@ -77,7 +93,7 @@ class Alg_WC_Crowdfunding_Admin {
 			}
 			if ( 'alg_crowdfunding_enabled' === $option['name'] ) {
 				$c = alg_count_crowdfunding_products( $post_id ) + 1;
-				if ( 'yes' === $option_value && $c >= apply_filters( 'alg_crowdfunding_option', 4 ) ) {
+				if ( 'yes' === $option_value && $c >= apply_filters( 'alg_crowdfunding_option', 4, 'count' ) ) {
 					add_filter( 'redirect_post_location', array( $this, 'add_notice_query_var' ), 99 );
 					$option_value = 'no';
 				}
@@ -110,14 +126,14 @@ class Alg_WC_Crowdfunding_Admin {
 	/**
 	 * admin_notices.
 	 *
-	 * @version 2.0.0
+	 * @version 2.4.0
 	 * @since   2.0.0
 	 */
 	function admin_notices() {
 		if ( ! isset( $_GET['alg_admin_notice'] ) ) {
 			return;
 		}
-		?><div class="error"><p><?php echo '<div class="message">' . __( 'Free plugin\'s version is limited to 3 crowdfunding products enabled at the same time. Please visit <a href="http://coder.fm/item/crowdfunding-for-woocommerce-plugin/" target="_blank">plugin\'s page</a> for more information.', 'crowdfunding-for-woocommerce' ) . '</div>'; ?></p></div><?php
+		?><div class="error"><p><?php echo '<div class="message">' . sprintf( __( 'Free plugin\'s version is limited to 3 crowdfunding products enabled at the same time. Please visit <a href="%s" target="_blank">plugin\'s page</a> for more information.', 'crowdfunding-for-woocommerce' ), 'https://wpcodefactory.com/item/crowdfunding-woocommerce-wordpress-plugin/' ) . '</div>'; ?></p></div><?php
 	}
 
 	/**
@@ -156,8 +172,9 @@ class Alg_WC_Crowdfunding_Admin {
 	/**
 	 * create_meta_box.
 	 *
-	 * @version 2.3.3
+	 * @version 2.4.0
 	 * @since   2.0.0
+	 * @todo    remove `html_v1_convert`
 	 */
 	function create_meta_box() {
 		global $admin_notices;
@@ -221,7 +238,7 @@ class Alg_WC_Crowdfunding_Admin {
 			$html_v1_convert .= '<div style="border:1px dashed red;padding:5px;">';
 			$html_v1_convert .= '<h4 style="color:red;">' . __( 'Convert to Crowdfunding Product Version 2', 'crowdfunding-for-woocommerce' ) . '</h4>';
 			$html_v1_convert .= '<p>';
-			$html_v1_convert .= __( '"Crowdfunding product" type is removed since "Crowdfunding for WooCommerce" plugin version 2.x.x. To continue using the plugin, you will need to maually change products type to variable and create product variations. You can always return back to <a href="https://downloads.wordpress.org/plugin/crowdfunding-for-woocommerce.1.2.0.zip">1.2.0 version</a>, however we do not recommed doing so, as you won\'t be able to get new updates. Please visit <a href="http://coder.fm/item/crowdfunding-for-woocommerce-plugin/" target="_blank">plugin\'s page</a> for more information.', 'crowdfunding-for-woocommerce' );
+			$html_v1_convert .= sprintf( __( '"Crowdfunding product" type is removed since "Crowdfunding for WooCommerce" plugin version 2.x.x. To continue using the plugin, you will need to manually change products type to variable and create product variations. You can always return back to <a href="https://downloads.wordpress.org/plugin/crowdfunding-for-woocommerce.1.2.0.zip">1.2.0 version</a>, however we do not recommend doing so, as you won\'t be able to get new updates. Please visit <a href="%s" target="_blank">plugin\'s page</a> for more information.', 'crowdfunding-for-woocommerce' ), 'https://wpcodefactory.com/item/crowdfunding-woocommerce-wordpress-plugin/' );
 			$html_v1_convert .= '</p>';
 
 			$html_v1_convert .= '<p>';
@@ -252,7 +269,7 @@ class Alg_WC_Crowdfunding_Admin {
 	/**
 	 * create_orders_data_meta_box.
 	 *
-	 * @version 2.3.0
+	 * @version 2.6.0
 	 * @since   2.3.0
 	 */
 	function create_orders_data_meta_box() {
@@ -272,13 +289,15 @@ class Alg_WC_Crowdfunding_Admin {
 			if ( '' !== $total_items ) {
 				$table_data[] = array( __( 'Total Items', 'crowdfunding-for-woocommerce' ), $total_items );
 			}
-			if ( '' !== $products_data_updated_time ) {
+			if ( '' != $products_data_updated_time ) {
 				$table_data[] = array( __( 'Last Updated', 'crowdfunding-for-woocommerce' ), date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $products_data_updated_time ) );
 			}
 			echo alg_get_table_html( $table_data, array( 'table_class' => 'widefat', 'table_heading_type' => 'vertical', ) );
 		} else {
 			echo '<em>' . __( 'No data yet.', 'crowdfunding-for-woocommerce' ) . '</em>';
 		}
+		echo '<p>' . '<a class="button" style="width:100%;text-align:center;" href="' . add_query_arg( 'alg_wc_crowdfunding_update_product_data', $current_post_id ) . '">' .
+			__( 'Update Data Now', 'crowdfunding-for-woocommerce' ) . '</a>' . '</p>';
 	}
 
 	/**

@@ -51,3 +51,17 @@ if ( is_admin() ) {
  * Note: Do not add any custom code here. Please use a custom plugin so that your customizations aren't lost during updates.
  * https://github.com/woocommerce/theme-customisations
  */
+
+// Removes showing results in Storefront theme
+ 
+add_action('init','delay_remove_result_count');
+ 
+function delay_remove_result_count() {
+remove_action( 'woocommerce_after_shop_loop', 'woocommerce_result_count', 20 );
+remove_action( 'woocommerce_before_shop_loop', 'woocommerce_result_count', 20 );
+}
+
+add_action( 'init', 'remove_breadcrumbs' );
+function remove_breadcrumbs() {
+   remove_action('storefront_content_top', 'woocommerce_breadcrumb', 10);
+}

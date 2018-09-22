@@ -3,7 +3,7 @@
  * WooCommerce PagSeguro Gateway class
  *
  * @package WooCommerce_PagSeguro/Classes/Gateway
- * @version 2.11.0
+ * @version 2.12.0
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -50,7 +50,11 @@ class WC_PagSeguro_Gateway extends WC_Payment_Gateway {
 
 		// Active logs.
 		if ( 'yes' == $this->debug ) {
-			$this->log = new WC_Logger();
+			if ( function_exists( 'wc_get_logger' ) ) {
+				$this->log = wc_get_logger();
+			} else {
+				$this->log = new WC_Logger();
+			}
 		}
 
 		// Set the API.
@@ -133,9 +137,9 @@ class WC_PagSeguro_Gateway extends WC_Payment_Gateway {
 				$session_id = $this->api->get_session_id();
 				$suffix     = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 
-				wp_enqueue_style( 'pagseguro-checkout', plugins_url( 'assets/css/transparent-checkout' . $suffix . '.css', plugin_dir_path( __FILE__ ) ), array(), WC_PagSeguro::VERSION );
+				wp_enqueue_style( 'pagseguro-checkout', plugins_url( 'assets/css/frontend/transparent-checkout' . $suffix . '.css', plugin_dir_path( __FILE__ ) ), array(), WC_PagSeguro::VERSION );
 				wp_enqueue_script( 'pagseguro-library', $this->api->get_direct_payment_url(), array(), null, true );
-				wp_enqueue_script( 'pagseguro-checkout', plugins_url( 'assets/js/transparent-checkout' . $suffix . '.js', plugin_dir_path( __FILE__ ) ), array( 'jquery', 'pagseguro-library', 'woocommerce-extra-checkout-fields-for-brazil-front' ), WC_PagSeguro::VERSION, true );
+				wp_enqueue_script( 'pagseguro-checkout', plugins_url( 'assets/js/frontend/transparent-checkout' . $suffix . '.js', plugin_dir_path( __FILE__ ) ), array( 'jquery', 'pagseguro-library', 'woocommerce-extra-checkout-fields-for-brazil-front' ), WC_PagSeguro::VERSION, true );
 
 				wp_localize_script(
 					'pagseguro-checkout',
@@ -310,7 +314,7 @@ class WC_PagSeguro_Gateway extends WC_Payment_Gateway {
 	public function admin_options() {
 		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 
-		wp_enqueue_script( 'pagseguro-admin', plugins_url( 'assets/js/admin' . $suffix . '.js', plugin_dir_path( __FILE__ ) ), array( 'jquery' ), WC_PagSeguro::VERSION, true );
+		wp_enqueue_script( 'pagseguro-admin', plugins_url( 'assets/js/admin/admin' . $suffix . '.js', plugin_dir_path( __FILE__ ) ), array( 'jquery' ), WC_PagSeguro::VERSION, true );
 
 		include dirname( __FILE__ ) . '/admin/views/html-admin-page.php';
 	}
@@ -360,7 +364,7 @@ class WC_PagSeguro_Gateway extends WC_Payment_Gateway {
 	 * @return array
 	 */
 	public function process_payment( $order_id ) {
-		$order = new WC_Order( $order_id );
+		$order = wc_get_order( $order_id );
 
 		if ( 'lightbox' != $this->method ) {
 			if ( isset( $_POST['pagseguro_sender_hash'] ) && 'transparent' == $this->method ) {
@@ -407,7 +411,7 @@ class WC_PagSeguro_Gateway extends WC_Payment_Gateway {
 	 * @param int $order_id Order ID.
 	 */
 	public function receipt_page( $order_id ) {
-		$order        = new WC_Order( $order_id );
+		$order        = wc_get_order( $order_id );
 		$request_data = $_POST;
 		if ( isset( $_GET['use_shipping'] ) && true == $_GET['use_shipping'] ) {
 			$request_data['ship_to_different_address'] = true;
@@ -463,90 +467,84 @@ class WC_PagSeguro_Gateway extends WC_Payment_Gateway {
 	}
 
 	/**
+	 * Save payment meta data.
+	 *
+	 * @param  WC_Order $order Order instance.
+	 * @param  array   $posted Posted data.
+	 */
+	protected function save_payment_meta_data( $order, $posted ) {
+		$meta_data    = array();
+		$payment_data = array(
+			'type'         => '',
+			'method'       => '',
+			'installments' => '',
+			'link'         => '',
+		);
+
+		if ( isset( $posted->sender->email ) ) {
+			$meta_data[ __( 'Payer email', 'woocommerce-pagseguro' ) ] = sanitize_text_field( (string) $posted->sender->email );
+		}
+		if ( isset( $posted->sender->name ) ) {
+			$meta_data[ __( 'Payer name', 'woocommerce-pagseguro' ) ] = sanitize_text_field( (string) $posted->sender->name );
+		}
+		if ( isset( $posted->paymentMethod->type ) ) {
+			$payment_data['type'] = intval( $posted->paymentMethod->type );
+			$meta_data[ __( 'Payment type', 'woocommerce-pagseguro' ) ] = $this->api->get_payment_name_by_type( $payment_data['type'] );
+		}
+		if ( isset( $posted->paymentMethod->code ) ) {
+			$payment_data['method'] = $this->api->get_payment_method_name( intval( $posted->paymentMethod->code ) );
+			$meta_data[ __( 'Payment method', 'woocommerce-pagseguro' ) ] = $payment_data['method'];
+		}
+		if ( isset( $posted->installmentCount ) ) {
+			$payment_data['installments'] = sanitize_text_field( (string) $posted->installmentCount );
+			$meta_data[ __( 'Installments', 'woocommerce-pagseguro' ) ] = $payment_data['installments'];
+		}
+		if ( isset( $posted->paymentLink ) ) {
+			$payment_data['link'] = sanitize_text_field( (string) $posted->paymentLink );
+			$meta_data[ __( 'Payment URL', 'woocommerce-pagseguro' ) ] = $payment_data['link'];
+		}
+
+		$meta_data['_wc_pagseguro_payment_data'] = $payment_data;
+
+		// WooCommerce 3.0 or later.
+		if ( method_exists( $order, 'update_meta_data' ) ) {
+			foreach ( $meta_data as $key => $value ) {
+				$order->update_meta_data( $key, $value );
+			}
+			$order->save();
+		} else {
+			foreach ( $meta_data as $key => $value ) {
+				update_post_meta( $order->id, $key, $value );
+			}
+		}
+	}
+
+	/**
 	 * Update order status.
 	 *
 	 * @param array $posted PagSeguro post data.
 	 */
 	public function update_order_status( $posted ) {
-
 		if ( isset( $posted->reference ) ) {
-			$order_id = (int) str_replace( $this->invoice_prefix, '', $posted->reference );
-			$order    = new WC_Order( $order_id );
+			$id    = (int) str_replace( $this->invoice_prefix, '', $posted->reference );
+			$order = wc_get_order( $id );
+
+			// Check if order exists.
+			if ( ! $order ) {
+				return;
+			}
+
+			$order_id = method_exists( $order, 'get_id' ) ? $order->get_id() : $order->id;
 
 			// Checks whether the invoice number matches the order.
 			// If true processes the payment.
-			if ( $order->id === $order_id ) {
-
-				if ( 'yes' == $this->debug ) {
+			if ( $order_id === $id ) {
+				if ( 'yes' === $this->debug ) {
 					$this->log->add( $this->id, 'PagSeguro payment status for order ' . $order->get_order_number() . ' is: ' . intval( $posted->status ) );
 				}
 
-				// Order details.
-				$order_details = array(
-					'type'         => '',
-					'method'       => '',
-					'installments' => '',
-					'link'         => '',
-				);
-
-				if ( isset( $posted->code ) ) {
-					update_post_meta(
-						$order->id,
-						__( 'PagSeguro Transaction ID', 'woocommerce-pagseguro' ),
-						(string) $posted->code
-					);
-				}
-				if ( isset( $posted->sender->email ) ) {
-					update_post_meta(
-						$order->id,
-						__( 'Payer email', 'woocommerce-pagseguro' ),
-						(string) $posted->sender->email
-					);
-				}
-				if ( isset( $posted->sender->name ) ) {
-					update_post_meta(
-						$order->id,
-						__( 'Payer name', 'woocommerce-pagseguro' ),
-						(string) $posted->sender->name
-					);
-				}
-				if ( isset( $posted->paymentMethod->type ) ) {
-					$order_details['type'] = intval( $posted->paymentMethod->type );
-					update_post_meta(
-						$order->id,
-						__( 'Payment type', 'woocommerce-pagseguro' ),
-						$this->api->get_payment_name_by_type( $order_details['type'] )
-					);
-				}
-				if ( isset( $posted->paymentMethod->code ) ) {
-					$order_details['method'] = $this->api->get_payment_method_name( intval( $posted->paymentMethod->code ) );
-					update_post_meta(
-						$order->id,
-						__( 'Payment method', 'woocommerce-pagseguro' ),
-						$order_details['method']
-					);
-				}
-				if ( isset( $posted->installmentCount ) ) {
-					$order_details['installments'] = (string) $posted->installmentCount;
-					update_post_meta(
-						$order->id,
-						__( 'Installments', 'woocommerce-pagseguro' ),
-						$order_details['installments']
-					);
-				}
-				if ( isset( $posted->paymentLink ) ) {
-					$order_details['link'] = (string) $posted->paymentLink;
-					update_post_meta(
-						$order->id,
-						__( 'Payment url', 'woocommerce-pagseguro' ),
-						$order_details['link']
-					);
-				}
-
-				// Save/update payment information for transparente checkout.
-				if ( 'transparent' == $this->method ) {
-					update_post_meta( $order->id, '_wc_pagseguro_payment_data', $order_details );
-				}
+				// Save meta data.
+				$this->save_payment_meta_data( $order, $posted );
 
 				switch ( intval( $posted->status ) ) {
 					case 1 :
@@ -560,11 +558,8 @@ class WC_PagSeguro_Gateway extends WC_Payment_Gateway {
 					case 3 :
 						$order->add_order_note( __( 'PagSeguro: Payment approved.', 'woocommerce-pagseguro' ) );
 
-						// For WooCommerce 2.2 or later.
-						add_post_meta( $order->id, '_transaction_id', (string) $posted->code, true );
-
 						// Changing the order for processing and reduces the stock.
-						$order->payment_complete();
+						$order->payment_complete( sanitize_text_field( (string) $posted->code ) );
 
 						break;
 					case 4 :
@@ -595,11 +590,10 @@ class WC_PagSeguro_Gateway extends WC_Payment_Gateway {
 						break;
 
 					default :
-						// No action xD.
 						break;
 				}
 			} else {
-				if ( 'yes' == $this->debug ) {
+				if ( 'yes' === $this->debug ) {
 					$this->log->add( $this->id, 'Error: Order Key does not match with PagSeguro reference.' );
 				}
 			}
@@ -612,7 +606,13 @@ class WC_PagSeguro_Gateway extends WC_Payment_Gateway {
 	 * @param int $order_id Order ID.
 	 */
 	public function thankyou_page( $order_id ) {
-		$data = get_post_meta( $order_id, '_wc_pagseguro_payment_data', true );
+		$order = wc_get_order( $order_id );
+		// WooCommerce 3.0 or later.
+		if ( method_exists( $order, 'get_meta' ) ) {
+			$data = $order->get_meta( '_wc_pagseguro_payment_data' );
+		} else {
+			$data = get_post_meta( $order->id, '_wc_pagseguro_payment_data', true );
+		}
 
 		if ( isset( $data['type'] ) ) {
 			wc_get_template( 'payment-instructions.php', array(
@@ -634,11 +634,20 @@ class WC_PagSeguro_Gateway extends WC_Payment_Gateway {
 	 * @return string                Payment instructions.
 	 */
 	public function email_instructions( $order, $sent_to_admin, $plain_text = false ) {
-		if ( $sent_to_admin || 'on-hold' !== $order->status || $this->id !== $order->payment_method ) {
-			return;
-		}
+		// WooCommerce 3.0 or later.
+		if ( method_exists( $order, 'get_meta' ) ) {
+			if ( $sent_to_admin || 'on-hold' !== $order->get_status() || $this->id !== $order->get_payment_method() ) {
+				return;
+			}
 
-		$data = get_post_meta( $order->id, '_wc_pagseguro_payment_data', true );
+			$data = $order->get_meta( '_wc_pagseguro_payment_data' );
+		} else {
+			if ( $sent_to_admin || 'on-hold' !== $order->status || $this->id !== $order->payment_method ) {
+				return;
+			}
+
+			$data = get_post_meta( $order->id, '_wc_pagseguro_payment_data', true );
+		}
 
 		if ( isset( $data['type'] ) ) {
 			if ( $plain_text ) {

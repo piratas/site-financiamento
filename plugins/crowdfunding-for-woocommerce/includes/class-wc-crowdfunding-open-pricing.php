@@ -4,7 +4,7 @@
  *
  * The WooCommerce Crowdfunding Product Open Pricing class.
  *
- * @version 2.3.4
+ * @version 2.4.0
  * @since   2.2.0
  * @author  Algoritmika Ltd.
  */
@@ -18,11 +18,12 @@ class Alg_Crowdfunding_Product_Open_Pricing {
 	/**
 	 * Constructor.
 	 *
-	 * @version 2.2.0
+	 * @version 2.4.0
 	 * @since   2.2.0
 	 */
 	function __construct() {
-		add_filter( 'woocommerce_get_price',                  array( $this, 'get_open_price' ), PHP_INT_MAX, 2 );
+		$price_hook = ( version_compare( get_option( 'woocommerce_version', null ), '3.0.0', '<' ) ? 'woocommerce_get_price' : 'woocommerce_product_get_price' );
+		add_filter( $price_hook,                              array( $this, 'get_open_price' ), PHP_INT_MAX, 2 );
 		add_filter( 'woocommerce_get_price_html',             array( $this, 'hide_original_price' ), PHP_INT_MAX, 2 );
 		add_filter( 'woocommerce_get_variation_price_html',   array( $this, 'hide_original_price' ), PHP_INT_MAX, 2 );
 		add_filter( 'woocommerce_is_sold_individually',       array( $this, 'hide_quantity_input_field' ), PHP_INT_MAX, 2 );
@@ -40,19 +41,20 @@ class Alg_Crowdfunding_Product_Open_Pricing {
 	/**
 	 * is_open_price_product.
 	 *
-	 * @version 2.2.0
+	 * @version 2.4.0
 	 * @since   2.2.0
 	 */
 	function is_open_price_product( $_product ) {
-		$is_crowdfudning            = ( 'yes' === get_post_meta( $_product->id, '_' . 'alg_crowdfunding_enabled', true ) ) ? true : false;
-		$is_crowdfudning_open_price = ( 'yes' === get_post_meta( $_product->id, '_' . 'alg_crowdfunding_product_open_price_enabled', true ) ) ? true : false;
+		$_product_id = alg_get_product_id_or_variation_parent_id( $_product );
+		$is_crowdfudning            = ( 'yes' === get_post_meta( $_product_id, '_' . 'alg_crowdfunding_enabled', true ) );
+		$is_crowdfudning_open_price = ( 'yes' === get_post_meta( $_product_id, '_' . 'alg_crowdfunding_product_open_price_enabled', true ) );
 		return ( $is_crowdfudning && $is_crowdfudning_open_price );
 	}
 
 	/**
 	 * is_purchasable.
 	 *
-	 * @version 2.2.0
+	 * @version 2.4.0
 	 * @since   2.2.0
 	 */
 	function is_purchasable( $purchasable, $_product ) {
@@ -68,7 +70,7 @@ class Alg_Crowdfunding_Product_Open_Pricing {
 				$purchasable = false; */
 
 			// Check the product is published
-			} elseif ( $_product->post->post_status !== 'publish' && ! current_user_can( 'edit_post', $_product->id ) ) {
+			} elseif ( 'publish' !== alg_get_product_post_status( $_product ) && ! current_user_can( 'edit_post', alg_get_product_id_or_variation_parent_id( $_product ) ) ) {
 				$purchasable = false;
 			}
 		}
@@ -101,11 +103,11 @@ class Alg_Crowdfunding_Product_Open_Pricing {
 	/**
 	 * add_to_cart_url.
 	 *
-	 * @version 2.2.0
+	 * @version 2.4.0
 	 * @since   2.2.0
 	 */
 	function add_to_cart_url( $url, $_product ) {
-		return ( $this->is_open_price_product( $_product ) ) ? get_permalink( $_product->id ) : $url;
+		return ( $this->is_open_price_product( $_product ) ) ? get_permalink( alg_get_product_id_or_variation_parent_id( $_product ) ) : $url;
 	}
 
 	/**
@@ -211,7 +213,7 @@ class Alg_Crowdfunding_Product_Open_Pricing {
 	/**
 	 * add_open_price_input_field_to_frontend.
 	 *
-	 * @version 2.3.4
+	 * @version 2.4.0
 	 * @since   2.2.0
 	 */
 	function add_open_price_input_field_to_frontend() {
@@ -219,11 +221,12 @@ class Alg_Crowdfunding_Product_Open_Pricing {
 		if ( $this->is_open_price_product( $the_product ) ) {
 			$title = get_option( 'alg_crowdfunding_product_open_price_label_frontend', __( 'Name Your Price', 'crowdfunding-for-woocommerce' ) );
 //			$placeholder = $the_product->get_price();
+			$_product_id = alg_get_product_id_or_variation_parent_id( $the_product );
 			$value = ( isset( $_POST['alg_crowdfunding_open_price'] ) ) ?
 				$_POST['alg_crowdfunding_open_price'] :
-				get_post_meta( $the_product->id, '_' . 'alg_crowdfunding_product_open_price_default_price', true );
+				get_post_meta( $_product_id, '_' . 'alg_crowdfunding_product_open_price_default_price', true );
 			$custom_attributes = '';
-			$wc_price_decimals = get_post_meta( $the_product->id, '_' . 'alg_crowdfunding_product_open_price_step', true );
+			$wc_price_decimals = get_post_meta( $_product_id, '_' . 'alg_crowdfunding_product_open_price_step', true );
 			if ( '' === $wc_price_decimals ) {
 				$wc_price_decimals = wc_get_price_decimals();
 			}

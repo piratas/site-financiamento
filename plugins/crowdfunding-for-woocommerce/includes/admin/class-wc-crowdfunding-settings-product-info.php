@@ -2,7 +2,7 @@
 /**
  * Crowdfunding for WooCommerce - Product Info Section Settings
  *
- * @version 2.0.0
+ * @version 2.6.0
  * @since   1.0.0
  * @author  Algoritmika Ltd.
  */
@@ -16,7 +16,7 @@ class Alg_WC_Crowdfunding_Settings_Product_Info {
 	/**
 	 * Constructor.
 	 */
-	public function __construct() {
+	function __construct() {
 
 		$this->id   = 'product_info';
 		$this->desc = __( 'Product Info', 'crowdfunding-for-woocommerce' );
@@ -36,7 +36,7 @@ class Alg_WC_Crowdfunding_Settings_Product_Info {
 	/**
 	 * get_settings.
 	 *
-	 * @version 2.0.0
+	 * @version 2.6.0
 	 */
 	function get_settings() {
 
@@ -78,7 +78,7 @@ class Alg_WC_Crowdfunding_Settings_Product_Info {
 				           . '[product_crowdfunding_time_progress_bar before="<tr><td>Time Remaining</td><td>" after="</td></tr>"]' . PHP_EOL
 				           . '</table>',
 				'type'    => 'textarea',
-				'css'     => 'width:66%;min-width:300px;height:200px;',
+				'css'     => 'width:100%;height:200px;',
 			),
 
 			array(
@@ -121,7 +121,7 @@ class Alg_WC_Crowdfunding_Settings_Product_Info {
 				           . '[product_crowdfunding_time_remaining before="<p>Time Remaining: " after="</p>"]' . PHP_EOL
 				           . '[product_crowdfunding_time_progress_bar before="<p>Time Remaining: " after="</p>"]',
 				'type'    => 'textarea',
-				'css'     => 'width:66%;min-width:300px;height:200px;',
+				'css'     => 'width:100%;height:200px;',
 			),
 
 			array(
@@ -129,6 +129,7 @@ class Alg_WC_Crowdfunding_Settings_Product_Info {
 				'id'      => 'alg_woocommerce_crowdfunding_product_info_filter',
 				'default' => 'woocommerce_before_single_product_summary',
 				'type'    => 'select',
+				'class'   => 'wc-enhanced-select',
 				'options' => array(
 					'woocommerce_before_single_product_summary' => __( 'Before single product summary', 'crowdfunding-for-woocommerce' ),
 					'woocommerce_after_single_product_summary'  => __( 'After single product summary',  'crowdfunding-for-woocommerce' ),
@@ -170,7 +171,7 @@ class Alg_WC_Crowdfunding_Settings_Product_Info {
 				           . '[product_crowdfunding_goal before="<p>End Goal: " after="</p>"]' . PHP_EOL
 				           . '[product_crowdfunding_time_progress_bar before="<p>" after="</p>"]',
 				'type'    => 'textarea',
-				'css'     => 'width:66%;min-width:300px;height:200px;',
+				'css'     => 'width:100%;height:200px;',
 			),
 
 			array(
@@ -178,6 +179,7 @@ class Alg_WC_Crowdfunding_Settings_Product_Info {
 				'id'      => 'alg_woocommerce_crowdfunding_product_info_archives_filter',
 				'default' => 'woocommerce_after_shop_loop_item',
 				'type'    => 'select',
+				'class'   => 'wc-enhanced-select',
 				'options' => array(
 					'woocommerce_before_shop_loop_item'       => __( 'Before product', 'crowdfunding-for-woocommerce' ),
 					'woocommerce_before_shop_loop_item_title' => __( 'Before product title', 'crowdfunding-for-woocommerce' ),

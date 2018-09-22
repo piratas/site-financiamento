@@ -28,6 +28,7 @@ class WC_Gateway_PPEC_Admin_Handler {
 		add_action( 'woocommerce_order_action_ppec_capture_charge', array( $this, 'maybe_capture_charge' ) );
 
 		add_action( 'load-woocommerce_page_wc-settings', array( $this, 'maybe_redirect_to_ppec_settings' ) );
+		add_action( 'load-woocommerce_page_wc-settings', array( $this, 'maybe_reset_api_credentials' ) );
 	}
 
 	public function add_capture_charge_order_action( $actions ) {
@@ -37,8 +38,13 @@ class WC_Gateway_PPEC_Admin_Handler {
 
 		$order = wc_get_order( $_REQUEST['post'] );
 
+		$old_wc         = version_compare( WC_VERSION, '3.0', '<' );
+		$order_id       = $old_wc ? $order->id : $order->get_id();
+		$payment_method = $old_wc ? $order->payment_method : $order->get_payment_method();
+		$paypal_status  = $old_wc ? get_post_meta( $order_id, '_paypal_status', true ) : $order->get_meta( '_paypal_status', true );
+
 		// bail if the order wasn't paid for with this gateway
-		if ( 'ppec_paypal' !== $order->payment_method || 'pending' !== get_post_meta( $order->id, '_paypal_status', true ) ) {
+		if ( 'ppec_paypal' !== $payment_method || 'pending' !== $paypal_status ) {
 			return $actions;
 		}
 
@@ -106,7 +112,7 @@ class WC_Gateway_PPEC_Admin_Handler {
 		// current section. (Note: The option will be empty if it has never been enabled)
 
 		$simplify_commerce_options = get_option( 'woocommerce_simplify_commerce_settings', array() );
-		if ( empty( $simplify_commerce_options ) || ( "no" === $simplify_commerce_options['enabled'] ) ) {
+		if ( empty( $simplify_commerce_options ) || ( 'no' === $simplify_commerce_options['enabled'] ) ) {
 			if ( 'wc_gateway_simplify_commerce' !== $current_section ) {
 				$sections_to_remove[] = 'wc_gateway_simplify_commerce';
 			}
@@ -115,8 +121,8 @@ class WC_Gateway_PPEC_Admin_Handler {
 			}
 		}
 
-		foreach( $sections_to_remove as $section_to_remove ) {
-			unset( $sections[$section_to_remove] );
+		foreach ( $sections_to_remove as $section_to_remove ) {
+			unset( $sections[ $section_to_remove ] );
 		}
 
 		return $sections;
@@ -128,7 +134,8 @@ class WC_Gateway_PPEC_Admin_Handler {
 			$order = wc_get_order( $order );
 		}
 
-		$this->capture_payment( $order->id );
+		$order_id = version_compare( WC_VERSION, '3.0', '<' ) ? $order->id : $order->get_id();
+		$this->capture_payment( $order_id );
 
 		return true;
 	}
@@ -139,15 +146,20 @@ class WC_Gateway_PPEC_Admin_Handler {
 	 * @param int $order_id
 	 */
 	public function capture_payment( $order_id ) {
-		$order = wc_get_order( $order_id );
+		$order  = wc_get_order( $order_id );
+		$old_wc = version_compare( WC_VERSION, '3.0', '<' );
 
-		if ( 'ppec_paypal' === $order->payment_method ) {
+		$payment_method = $old_wc ? $order->payment_method : $order->get_payment_method();
+		if ( 'ppec_paypal' === $payment_method ) {
+
 			$trans_id = get_post_meta( $order_id, '_transaction_id', true );
 			$trans_details = wc_gateway_ppec()->client->get_transaction_details( array( 'TRANSACTIONID' => $trans_id ) );
 
 			if ( $trans_id && $this->is_authorized_only( $trans_details ) ) {
+				$order_total = $old_wc ? $order->order_total : $order->get_total();
+
 				$params['AUTHORIZATIONID'] = $trans_id;
-				$params['AMT'] = floatval( $order->order_total );
+				$params['AMT'] = floatval( $order_total );
 				$params['COMPLETETYPE'] = 'Complete';
 
 				$result = wc_gateway_ppec()->client->do_express_checkout_capture( $params );
@@ -155,6 +167,12 @@ class WC_Gateway_PPEC_Admin_Handler {
 				if ( is_wp_error( $result ) ) {
 					$order->add_order_note( __( 'Unable to capture charge!', 'woocommerce-gateway-paypal-express-checkout' ) . ' ' . $result->get_error_message() );
 				} else {
+					update_post_meta( $order_id, '_paypal_status', ! empty( $trans_details['PAYMENTSTATUS'] ) ? $trans_details['PAYMENTSTATUS'] : 'completed' );
+
+					if ( ! empty( $result['TRANSACTIONID'] ) ) {
+						update_post_meta( $order_id, '_transaction_id', $result['TRANSACTIONID'] );
+					}
+
 					$order->add_order_note( sprintf( __( 'PayPal Express Checkout charge complete (Charge ID: %s)', 'woocommerce-gateway-paypal-express-checkout' ), $trans_id ) );
 				}
 			}
@@ -183,8 +201,11 @@ class WC_Gateway_PPEC_Admin_Handler {
 	 */
 	public function cancel_payment( $order_id ) {
 		$order = wc_get_order( $order_id );
+		$old_wc = version_compare( WC_VERSION, '3.0', '<' );
+		$payment_method = $old_wc ? $order->payment_method : $order->get_payment_method();
 
-		if ( 'ppec_paypal' === $order->payment_method ) {
+		if ( 'ppec_paypal' === $payment_method ) {
+
 			$trans_id = get_post_meta( $order_id, '_transaction_id', true );
 			$trans_details = wc_gateway_ppec()->client->get_transaction_details( array( 'TRANSACTIONID' => $trans_id ) );
 
@@ -196,7 +217,7 @@ class WC_Gateway_PPEC_Admin_Handler {
 				if ( is_wp_error( $result ) ) {
 					$order->add_order_note( __( 'Unable to void charge!', 'woocommerce-gateway-paypal-express-checkout' ) . ' ' . $result->get_error_message() );
 				} else {
-					$order->add_order_note( sprintf( __( 'PayPal Express Checkout charge voided (Charge ID: %s)', 'woocommerce-gateway-paypal-express-checkout' ), $trans_id) );
+					$order->add_order_note( sprintf( __( 'PayPal Express Checkout charge voided (Charge ID: %s)', 'woocommerce-gateway-paypal-express-checkout' ), $trans_id ) );
 				}
 			}
 		}
@@ -234,5 +255,46 @@ class WC_Gateway_PPEC_Admin_Handler {
 			$redirect = add_query_arg( array( 'section' => 'wc_gateway_ppec_with_paypal' ) );
 			wp_safe_redirect( $redirect );
 		}
+	}
+
+	/**
+	 * Reset API credentials if merchant clicked the reset credential link.
+	 *
+	 * When API credentials empty, the connect button will be displayed again,
+	 * allowing merchant to reconnect with other account.
+	 *
+	 * When WooCommerce Branding is active, this handler may not be invoked as
+	 * screen ID may evaluates to something else.
+	 *
+	 * @since 1.2.0
+	 */
+	public function maybe_reset_api_credentials() {
+		if ( empty( $_GET['reset_ppec_api_credentials'] ) ) {
+			return;
+		}
+
+		if ( empty( $_GET['reset_nonce'] ) || ! wp_verify_nonce( $_GET['reset_nonce'], 'reset_ppec_api_credentials' ) ) {
+			return;
+		}
+
+		$settings = wc_gateway_ppec()->settings;
+		$env      = $settings->_environment;
+		if ( ! empty( $_GET['environment'] ) ) {
+			$env = $_GET['environment'];
+		}
+		$prefix = 'sandbox' === $env ? 'sandbox_' : '';
+
+		foreach ( array( 'api_username', 'api_password', 'api_signature', 'api_certificate' ) as $key ) {
+			$key = $prefix . $key;
+			$settings->{$key} = '';
+		}
+
+		// Save environment too as when it switches to another env and merchant
+		// click the reset they'd expect to save the environment too.
+		$settings->environment = 'sandbox' === $env ? 'sandbox' : 'live';
+
+		$settings->save();
+
+		wp_safe_redirect( wc_gateway_ppec()->get_admin_setting_link() );
 	}
 }

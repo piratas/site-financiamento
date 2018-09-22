@@ -1,7 +1,7 @@
 <?php
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit; // Exit if accessed directly.
 }
 
 /**
@@ -14,7 +14,6 @@ abstract class WC_Gateway_PPEC extends WC_Payment_Gateway {
 	 */
 	public function __construct() {
 		$this->has_fields         = false;
-		$this->icon               = 'https://www.paypalobjects.com/webstatic/en_US/i/buttons/pp-acceptance-small.png';
 		$this->supports[]         = 'refunds';
 		$this->method_title       = __( 'PayPal Express Checkout', 'woocommerce-gateway-paypal-express-checkout' );
 		$this->method_description = __( 'Allow customers to conveniently checkout directly with PayPal.', 'woocommerce-gateway-paypal-express-checkout' );
@@ -50,24 +49,26 @@ abstract class WC_Gateway_PPEC extends WC_Payment_Gateway {
 		}
 
 		$this->debug                      = 'yes' === $this->get_option( 'debug', 'no' );
-		$this->invoice_prefix             = $this->get_option( 'invoice_prefix', 'WC-' );
+		$this->invoice_prefix             = $this->get_option( 'invoice_prefix', '' );
 		$this->instant_payments           = 'yes' === $this->get_option( 'instant_payments', 'no' );
 		$this->require_billing            = 'yes' === $this->get_option( 'require_billing', 'no' );
 		$this->paymentaction              = $this->get_option( 'paymentaction', 'sale' );
-		$this->logo_image_url             = $this->get_option( 'logo_image_url' );
 		$this->subtotal_mismatch_behavior = $this->get_option( 'subtotal_mismatch_behavior', 'add' );
+		$this->use_ppc                    = false;
 
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 
 		// Change gateway name if session is active
 		if ( ! is_admin() ) {
-			$session  = WC()->session->get( 'paypal' );
-			$checkout = wc_gateway_ppec()->checkout;
-
-			if ( ! $checkout->has_active_session() || ! $session->checkout_completed ) {
+			if ( wc_gateway_ppec()->checkout->is_started_from_checkout_page() ) {
 				$this->title        = $this->get_option( 'title' );
 				$this->description  = $this->get_option( 'description' );
 			}
+		} else {
+			// Image upload.
+			wp_enqueue_media();
+
+			wp_enqueue_script( 'wc-gateway-ppec-settings', wc_gateway_ppec()->plugin_url . 'assets/js/wc-gateway-ppec-settings.js', array( 'jquery' ), wc_gateway_ppec()->version, true );
 		}
 	}
 
@@ -79,48 +80,61 @@ abstract class WC_Gateway_PPEC extends WC_Payment_Gateway {
 	}
 
 	/**
-	 * Process payments
+	 * Process payments.
+	 *
+	 * @param int $order_id Order ID
+	 *
+	 * @return array
 	 */
 	public function process_payment( $order_id ) {
 		$checkout = wc_gateway_ppec()->checkout;
 		$order    = wc_get_order( $order_id );
 		$session  = WC()->session->get( 'paypal' );
 
-		// Redirect them over to PayPal if they have no current session (this is for PayPal Mark).
-		if ( ! $checkout->has_active_session() || ! $session->checkout_completed ) {
+		// Redirect them over to PayPal if they have no current session (this
+		// is for PayPal Mark).
+		if ( $checkout->is_started_from_checkout_page() ) {
 			try {
 				return array(
 					'result'   => 'success',
-					'redirect' => $checkout->start_checkout_from_checkout( $order_id ),
+					'redirect' => $checkout->start_checkout_from_checkout( $order_id, $this->use_ppc ),
 				);
-			} catch( PayPal_API_Exception $e ) {
-				wc_gateway_ppec_format_paypal_api_exception( $e->errors );
+			} catch ( PayPal_API_Exception $e ) {
+				wc_add_notice( $e->getMessage(), 'error' );
 			}
 		} else {
 			try {
 				// Get details
-				$checkout_details = $checkout->getCheckoutDetails( $session->token );
+				$checkout_details = $checkout->get_checkout_details( $session->token );
 
-				// Store addresses given by PayPal
-				$order->set_address( $checkout->get_mapped_billing_address( $checkout_details ), 'billing' );
-				$order->set_address( $checkout->get_mapped_shipping_address( $checkout_details ), 'shipping' );
+				$checkout_context = array(
+					'start_from' => 'checkout',
+					'order_id'   => $order_id,
+				);
+				if ( $checkout->needs_billing_agreement_creation( $checkout_context ) ) {
+					$checkout->create_billing_agreement( $order, $checkout_details );
+				}
 
 				// Complete the payment now.
-				$checkout->do_payment( $order, $session->token, $session->payerID );
+				$checkout->do_payment( $order, $session->token, $session->payer_id );
 
 				// Clear Cart
 				WC()->cart->empty_cart();
 
 				return array(
 					'result'   => 'success',
-					'redirect' => $this->get_return_url( $order )
+					'redirect' => $this->get_return_url( $order ),
 				);
-			} catch( PayPal_Missing_Session_Exception $e ) {
-				// For some reason, our session data is missing. Generally, if we've made it this far, this shouldn't happen.
+			} catch ( PayPal_Missing_Session_Exception $e ) {
+
+				// For some reason, our session data is missing. Generally,
+				// if we've made it this far, this shouldn't happen.
 				wc_add_notice( __( 'Sorry, an error occurred while trying to process your payment. Please try again.', 'woocommerce-gateway-paypal-express-checkout' ), 'error' );
-			} catch( PayPal_API_Exception $e ) {
-				// Did we get a 10486 or 10422 back from PayPal?  If so, this means we need to send the buyer back over to
-				// PayPal to have them pick out a new funding method.
+			} catch ( PayPal_API_Exception $e ) {
+
+				// Did we get a 10486 or 10422 back from PayPal?  If so, this
+				// means we need to send the buyer back over to PayPal to have
+				// them pick out a new funding method.
 				$error_codes = wp_list_pluck( $e->errors, 'error_code' );
 
 				if ( in_array( '10486', $error_codes ) || in_array( '10422', $error_codes ) ) {
@@ -131,10 +145,10 @@ abstract class WC_Gateway_PPEC extends WC_Payment_Gateway {
 
 					return array(
 						'result'   => 'success',
-						'redirect' => wc_gateway_ppec()->settings->get_paypal_redirect_url( $session->token, true )
+						'redirect' => wc_gateway_ppec()->settings->get_paypal_redirect_url( $session->token, true ),
 					);
 				} else {
-					wc_gateway_ppec_format_paypal_api_exception( $e->errors );
+					wc_add_notice( $e->getMessage(), 'error' );
 				}
 			}
 		}
@@ -150,7 +164,7 @@ abstract class WC_Gateway_PPEC extends WC_Payment_Gateway {
 			return __( 'No API certificate on file.', 'woocommerce-gateway-paypal-express-checkout' );
 		}
 
-		$cert = @openssl_x509_read( $cert_string );
+		$cert = @openssl_x509_read( $cert_string ); // @codingStandardsIgnoreLine
 		$out  = '';
 
 		if ( false !== $cert ) {
@@ -182,14 +196,6 @@ abstract class WC_Gateway_PPEC extends WC_Payment_Gateway {
 	 * Do some additonal validation before saving options via the API.
 	 */
 	public function process_admin_options() {
-		// Validate logo
-		$logo_image_url = wc_clean( $_POST['woocommerce_ppec_paypal_logo_image_url'] );
-
-		if ( ! empty( $logo_image_url ) && ! preg_match( '/https?:\/\/[a-zA-Z0-9][a-zA-Z0-9.-]+[a-zA-Z0-9](\/[a-zA-Z0-9.\/?&%#]*)?/', $logo_image_url ) ) {
-			WC_Admin_Settings::add_error( __( 'Error: The logo image URL you provided is not valid and cannot be used.', 'woocommerce-gateway-paypal-express-checkout' ) );
-			unset( $_POST['woocommerce_ppec_paypal_logo_image_url'] );
-		}
-
 		// If a certificate has been uploaded, read the contents and save that string instead.
 		if ( array_key_exists( 'woocommerce_ppec_paypal_api_certificate', $_FILES )
 			&& array_key_exists( 'tmp_name', $_FILES['woocommerce_ppec_paypal_api_certificate'] )
@@ -217,7 +223,7 @@ abstract class WC_Gateway_PPEC extends WC_Payment_Gateway {
 
 		parent::process_admin_options();
 
-		// Validate credentials
+		// Validate credentials.
 		$this->validate_active_credentials();
 	}
 
@@ -225,7 +231,7 @@ abstract class WC_Gateway_PPEC extends WC_Payment_Gateway {
 	 * Validate the provided credentials.
 	 */
 	protected function validate_active_credentials() {
-		$settings = wc_gateway_ppec()->settings->load_settings( true );
+		$settings = wc_gateway_ppec()->settings->load( true );
 		$creds    = $settings->get_active_api_credentials();
 
 		$username = $creds->get_username();
@@ -245,20 +251,19 @@ abstract class WC_Gateway_PPEC extends WC_Payment_Gateway {
 					$payer_id = wc_gateway_ppec()->client->test_api_credentials( $creds, $settings->get_environment() );
 
 					if ( ! $payer_id ) {
-						WC_Admin_Settings::add_error( sprintf( __( 'Error: The %s credentials you provided are not valid.  Please double-check that you entered them correctly and try again.', 'woocommerce-gateway-paypal-express-checkout' ), __( $settings->get_environment(), 'woocommerce-gateway-paypal-express-checkout' ) ) );
+						WC_Admin_Settings::add_error( __( 'Error: The API credentials you provided are not valid.  Please double-check that you entered them correctly and try again.', 'woocommerce-gateway-paypal-express-checkout' ) );
 						return false;
 					}
+				} catch ( PayPal_API_Exception $ex ) {
 
-				} catch( PayPal_API_Exception $ex ) {
-					WC_Admin_Settings::add_error( sprintf( __( 'An error occurred while trying to validate your %s API credentials.  Unable to verify that your API credentials are correct.', 'woocommerce-gateway-paypal-express-checkout' ), __( $settings->get_environment(), 'woocommerce-gateway-paypal-express-checkout' ) ) );
+					WC_Admin_Settings::add_error( __( 'An error occurred while trying to validate your API credentials.  Unable to verify that your API credentials are correct.', 'woocommerce-gateway-paypal-express-checkout' ) );
 				}
-
 			} elseif ( is_a( $creds, 'WC_Gateway_PPEC_Client_Credential_Certificate' ) && $creds->get_certificate() ) {
 
-				$cert = @openssl_x509_read( $creds->get_certificate() );
+				$cert = @openssl_x509_read( $creds->get_certificate() ); // @codingStandardsIgnoreLine
 
 				if ( false === $cert ) {
-					WC_Admin_Settings::add_error( sprintf( __( 'Error: The %s API certificate is not valid.', 'woocommerce-gateway-paypal-express-checkout' ), __( $settings->get_environment(), 'woocommerce-gateway-paypal-express-checkout' ) ) );
+					WC_Admin_Settings::add_error( __( 'Error: The API certificate is not valid.', 'woocommerce-gateway-paypal-express-checkout' ) );
 					return false;
 				}
 
@@ -266,7 +271,7 @@ abstract class WC_Gateway_PPEC extends WC_Payment_Gateway {
 				$valid_until = $cert_info['validTo_time_t'];
 
 				if ( $valid_until < time() ) {
-					WC_Admin_Settings::add_error( sprintf( __( 'Error: The %s API certificate has expired.', 'woocommerce-gateway-paypal-express-checkout' ), __( $settings->get_environment(), 'woocommerce-gateway-paypal-express-checkout' ) ) );
+					WC_Admin_Settings::add_error( __( 'Error: The API certificate has expired.', 'woocommerce-gateway-paypal-express-checkout' ) );
 					return false;
 				}
 
@@ -280,17 +285,16 @@ abstract class WC_Gateway_PPEC extends WC_Payment_Gateway {
 					$payer_id = wc_gateway_ppec()->client->test_api_credentials( $creds, $settings->get_environment() );
 
 					if ( ! $payer_id ) {
-						WC_Admin_Settings::add_error( sprintf( __( 'Error: The %s credentials you provided are not valid.  Please double-check that you entered them correctly and try again.', 'woocommerce-gateway-paypal-express-checkout' ), __( $settings->get_environment(), 'woocommerce-gateway-paypal-express-checkout' ) ) );
+						WC_Admin_Settings::add_error( __( 'Error: The API credentials you provided are not valid.  Please double-check that you entered them correctly and try again.', 'woocommerce-gateway-paypal-express-checkout' ) );
 						return false;
 					}
-
-				} catch( PayPal_API_Exception $ex ) {
-					WC_Admin_Settings::add_error( sprintf( __( 'An error occurred while trying to validate your %s API credentials.  Unable to verify that your API credentials are correct.', 'woocommerce-gateway-paypal-express-checkout' ), __( $settings->get_environment(), 'woocommerce-gateway-paypal-express-checkout' ) ) );
+				} catch ( PayPal_API_Exception $ex ) {
+					WC_Admin_Settings::add_error( __( 'An error occurred while trying to validate your API credentials.  Unable to verify that your API credentials are correct.', 'woocommerce-gateway-paypal-express-checkout' ) );
 				}
 
 			} else {
 
-				WC_Admin_Settings::add_error( sprintf( __( 'Error: You must provide a %s API signature or certificate.', 'woocommerce-gateway-paypal-express-checkout' ), __( $settings->get_environment(), 'woocommerce-gateway-paypal-express-checkout' ) ) );
+				WC_Admin_Settings::add_error( __( 'Error: You must provide API signature or certificate.', 'woocommerce-gateway-paypal-express-checkout' ) );
 				return false;
 			}
 
@@ -301,7 +305,7 @@ abstract class WC_Gateway_PPEC extends WC_Payment_Gateway {
 
 				try {
 					$is_account_enabled_for_billing_address = wc_gateway_ppec()->client->test_for_billing_address_enabled( $creds, $settings->get_environment() );
-				} catch( PayPal_API_Exception $ex ) {
+				} catch ( PayPal_API_Exception $ex ) {
 					$is_account_enabled_for_billing_address = false;
 				}
 
@@ -315,7 +319,13 @@ abstract class WC_Gateway_PPEC extends WC_Payment_Gateway {
 	}
 
 	/**
-	 * Refunds.
+	 * Process refund.
+	 *
+	 * @param int    $order_id Order ID
+	 * @param float  $amount   Order amount
+	 * @param string $reason   Refund reason
+	 *
+	 * @return boolean True or false based on success, or a WP_Error object.
 	 */
 	public function process_refund( $order_id, $amount = null, $reason = '' ) {
 		$order = wc_get_order( $order_id );
@@ -328,106 +338,102 @@ abstract class WC_Gateway_PPEC extends WC_Payment_Gateway {
 		// loop through each transaction to compile list of txns that are able to be refunded
 		// process refunds against each txn in the list until full amount of refund is reached
 		// first loop through, try to find a transaction that equals the refund amount being requested
-		$txnData = get_post_meta( $order_id, '_woo_pp_txnData', true );
-		$didRefund = false;
+		$old_wc = version_compare( WC_VERSION, '3.0', '<' );
+		$txn_data = $old_wc ? get_post_meta( $order_id, '_woo_pp_txnData', true ) : $order->get_meta( '_woo_pp_txnData', true );
+		$order_currency = $old_wc ? $order->order_currency : $order->get_currency();
 
-		foreach ( $txnData['refundable_txns'] as $key => $value ) {
-			$refundableAmount = $value['amount'] - $value['refunded_amount'];
+		foreach ( $txn_data['refundable_txns'] as $key => $value ) {
+			$refundable_amount = $value['amount'] - $value['refunded_amount'];
 
-			if ( $amount == $refundableAmount ) {
-				if ( 0 == $value['refunded_amount'] ) {
-					$refundType = 'Full';
-				} else {
-					$refundType = 'Partial';
-				}
+			if ( $amount == $refundable_amount ) {
+				$refund_type = ( 0 == $value['refunded_amount'] ) ? 'Full' : 'Partial';
 
 				try {
-					$refundTxnID = WC_Gateway_PPEC_Refund::refund_order( $order, $amount, $refundType, $reason, $order->get_order_currency() );
-					$txnData['refundable_txns'][ $key ]['refunded_amount'] += $amount;
-					$order->add_order_note( sprintf( __( 'PayPal refund completed; transaction ID = %s', 'woocommerce-gateway-paypal-express-checkout' ), $refundTxnID ) );
-					update_post_meta( $order_id, '_woo_pp_txnData', $txnData );
+					$refund_txn_id = WC_Gateway_PPEC_Refund::refund_order( $order, $amount, $refund_type, $reason, $order_currency );
+					$txn_data['refundable_txns'][ $key ]['refunded_amount'] += $amount;
+					$order->add_order_note( sprintf( __( 'PayPal refund completed; transaction ID = %s', 'woocommerce-gateway-paypal-express-checkout' ), $refund_txn_id ) );
+					if ( $old_wc ) {
+						update_post_meta( $order_id, '_woo_pp_txnData', $txn_data );
+					} else {
+						$order->update_meta_data( '_woo_pp_txnData', $txn_data );
+					}
 
 					return true;
 
-				} catch( PayPal_API_Exception $e ) {
-					foreach ( $e->errors as $error ) {
-						$final_output .= sprintf( __( 'Error: %1$s - %2$s', 'woocommerce-gateway-paypal-express-checkout' ), $error->error_code, $error->long_message );
-					}
-
-					return new WP_Error( 'paypal_refund_error', $final_output );
+				} catch ( PayPal_API_Exception $e ) {
+					return new WP_Error( 'paypal_refund_error', $e->getMessage() );
 				}
 			}
 		}
 
-		foreach ( $txnData['refundable_txns'] as $key => $value ) {
-			$refundableAmount = $value['amount'] - $value['refunded_amount'];
+		foreach ( $txn_data['refundable_txns'] as $key => $value ) {
+			$refundable_amount = $value['amount'] - $value['refunded_amount'];
 
-			if ( $amount < $refundableAmount ) {
+			if ( $amount < $refundable_amount ) {
 
 				try {
-					$refundTxnID = WC_Gateway_PPEC_Refund::refund_order( $order, $amount, 'Partial', $reason, $order->get_order_currency() );
-					$txnData['refundable_txns'][ $key ]['refunded_amount'] += $amount;
-					$order->add_order_note( sprintf( __( 'PayPal refund completed; transaction ID = %s', 'woocommerce-gateway-paypal-express-checkout' ), $refundTxnID ) );
-					update_post_meta( $order_id, '_woo_pp_txnData', $txnData );
+					$refund_txn_id = WC_Gateway_PPEC_Refund::refund_order( $order, $amount, 'Partial', $reason, $order_currency );
+					$txn_data['refundable_txns'][ $key ]['refunded_amount'] += $amount;
+					$order->add_order_note( sprintf( __( 'PayPal refund completed; transaction ID = %s', 'woocommerce-gateway-paypal-express-checkout' ), $refund_txn_id ) );
+					if ( $old_wc ) {
+						update_post_meta( $order_id, '_woo_pp_txnData', $txn_data );
+					} else {
+						$order->update_meta_data( '_woo_pp_txnData', $txn_data );
+					}
 
 					return true;
 
-				} catch( PayPal_API_Exception $e ) {
-					foreach ( $e->errors as $error ) {
-						$final_output .= sprintf( __( 'Error: %1$s - %2$s', 'woocommerce-gateway-paypal-express-checkout' ), $error->error_code, $error->long_message );
-					}
-
-					return new WP_Error( 'paypal_refund_error', $final_output );
+				} catch ( PayPal_API_Exception $e ) {
+					return new WP_Error( 'paypal_refund_error', $e->getMessage() );
 				}
 
 			}
 		}
 
-		$totalRefundableAmount = 0;
-		foreach ( $txnData['refundable_txns'] as $key => $value ) {
-			$refundableAmount = $value['amount'] - $value['refunded_amount'];
-			$totalRefundableAmount += $refundableAmount;
+		$total_refundable_amount = 0;
+		foreach ( $txn_data['refundable_txns'] as $key => $value ) {
+			$refundable_amount = $value['amount'] - $value['refunded_amount'];
+			$total_refundable_amount += $refundable_amount;
 		}
 
-		if ( $totalRefundableAmount < $amount ) {
-			if ( 0 == $totalRefundableAmount ) {
+		if ( $total_refundable_amount < $amount ) {
+			if ( 0 == $total_refundable_amount ) {
 				return new WP_Error( 'paypal_refund_error', __( 'Refund Error: All transactions have been fully refunded. There is no amount left to refund', 'woocommerce-gateway-paypal-express-checkout' ) );
 			} else {
-				return new WP_Error( 'paypal_refund_error', sprintf( __( 'Refund Error: The requested refund amount is too large. The refund amount must be less than or equal to %s.', 'woocommerce-gateway-paypal-express-checkout' ), html_entity_decode( get_woocommerce_currency_symbol() ) . $totalRefundableAmount ) );
+				return new WP_Error( 'paypal_refund_error', sprintf( __( 'Refund Error: The requested refund amount is too large. The refund amount must be less than or equal to %s.', 'woocommerce-gateway-paypal-express-checkout' ), html_entity_decode( get_woocommerce_currency_symbol() ) . $total_refundable_amount ) );
 			}
 		} else {
 			$total_to_refund = $amount;
 
-			foreach ( $txnData['refundable_txns'] as $key => $value ) {
-				$refundableAmount = $value['amount'] - $value['refunded_amount'];
+			foreach ( $txn_data['refundable_txns'] as $key => $value ) {
+				$refundable_amount = $value['amount'] - $value['refunded_amount'];
 
-				if ( $refundableAmount > $total_to_refund ) {
+				if ( $refundable_amount > $total_to_refund ) {
 					$amount_to_refund = $total_to_refund;
 				} else {
-					$amount_to_refund = $refundableAmount;
+					$amount_to_refund = $refundable_amount;
 				}
 
 				if ( 0 < $amount_to_refund ) {
+					$refund_type = 'Partial';
 					if ( 0 == $value['refunded_amount'] && $amount_to_refund == $value['amount'] ) {
-						$refundType = 'Full';
-					} else {
-						$refundType = 'Partial';
+						$refund_type = 'Full';
 					}
 
 					try {
-						$refundTxnID = WC_Gateway_PPEC_Refund::refund_order( $order, $amount_to_refund, $refundType, $reason, $order->get_order_currency() );
+						$refund_txn_id = WC_Gateway_PPEC_Refund::refund_order( $order, $amount_to_refund, $refund_type, $reason, $order_currency );
 						$total_to_refund -= $amount_to_refund;
-						$txnData['refundable_txns'][ $key ]['refunded_amount'] += $amount_to_refund;
-						$order->add_order_note( sprintf( __( 'PayPal refund completed; transaction ID = %s', 'woocommerce-gateway-paypal-express-checkout' ), $refundTxnID ) );
-						update_post_meta( $order_id, '_woo_pp_txnData', $txnData );
-
-						return true;
-					} catch( PayPal_API_Exception $e ) {
-						foreach ( $e->errors as $error ) {
-							$final_output .= sprintf( __( 'Error: %1$s - %2$s', 'woocommerce-gateway-paypal-express-checkout' ), $error->error_code, $error->long_message );
+						$txn_data['refundable_txns'][ $key ]['refunded_amount'] += $amount_to_refund;
+						$order->add_order_note( sprintf( __( 'PayPal refund completed; transaction ID = %s', 'woocommerce-gateway-paypal-express-checkout' ), $refund_txn_id ) );
+						if ( $old_wc ) {
+							update_post_meta( $order_id, '_woo_pp_txnData', $txn_data );
+						} else {
+							$order->update_meta_data( '_woo_pp_txnData', $txn_data );
 						}
 
-						return new WP_Error( 'paypal_refund_error', $final_output );
+						return true;
+					} catch ( PayPal_API_Exception $e ) {
+						return new WP_Error( 'paypal_refund_error', $e->getMessage() );
 					}
 				}
 			}
@@ -456,5 +462,93 @@ abstract class WC_Gateway_PPEC extends WC_Payment_Gateway {
 	 */
 	public function is_available() {
 		return 'yes' === $this->enabled;
+	}
+
+	/**
+	 * Generate Image HTML.
+	 *
+	 * @param  mixed $key
+	 * @param  mixed $data
+	 * @since  1.5.0
+	 * @return string
+	 */
+	public function generate_image_html( $key, $data ) {
+		$field_key = $this->get_field_key( $key );
+		$defaults  = array(
+			'title'             => '',
+			'disabled'          => false,
+			'class'             => '',
+			'css'               => '',
+			'placeholder'       => '',
+			'type'              => 'text',
+			'desc_tip'          => false,
+			'description'       => '',
+			'custom_attributes' => array(),
+		);
+
+		$data  = wp_parse_args( $data, $defaults );
+		$value = $this->get_option( $key );
+
+		// Hide show add remove buttons.
+		$maybe_hide_add_style    = '';
+		$maybe_hide_remove_style = '';
+
+		// For backwards compatibility (customers that already have set a url)
+		$value_is_url            = filter_var( $value, FILTER_VALIDATE_URL ) !== false;
+
+		if ( empty( $value ) || $value_is_url ) {
+			$maybe_hide_remove_style = 'display: none;';
+		} else {
+			$maybe_hide_add_style = 'display: none;';
+		}
+
+		ob_start();
+		?>
+		<tr valign="top">
+			<th scope="row" class="titledesc">
+				<?php echo $this->get_tooltip_html( $data ); ?>
+				<label for="<?php echo esc_attr( $field_key ); ?>"><?php echo wp_kses_post( $data['title'] ); ?></label>
+			</th>
+
+			<td class="image-component-wrapper">
+				<div class="image-preview-wrapper">
+					<?php
+					if ( ! $value_is_url ) {
+						echo wp_get_attachment_image( $value, 'thumbnail' );
+					} else {
+						echo sprintf( __( 'Already using URL as image: %s', 'woocommerce-gateway-paypal-express-checkout' ), $value );
+					}
+					?>
+				</div>
+
+				<button
+					class="button image_upload"
+					data-field-id="<?php echo esc_attr( $field_key ); ?>"
+					data-media-frame-title="<?php echo esc_attr( __( 'Select a image to upload', 'woocommerce-gateway-paypal-express-checkout' ) ); ?>"
+					data-media-frame-button="<?php echo esc_attr( __( 'Use this image', 'woocommerce-gateway-paypal-express-checkout' ) ); ?>"
+					data-add-image-text="<?php echo esc_attr( __( 'Add image', 'woocommerce-gateway-paypal-express-checkout' ) ); ?>"
+					style="<?php echo esc_attr( $maybe_hide_add_style ); ?>"
+				>
+					<?php echo esc_html__( 'Add image', 'woocommerce-gateway-paypal-express-checkout' ); ?>
+				</button>
+
+				<button
+					class="button image_remove"
+					data-field-id="<?php echo esc_attr( $field_key ); ?>"
+					style="<?php echo esc_attr( $maybe_hide_remove_style ); ?>"
+				>
+					<?php echo esc_html__( 'Remove image', 'woocommerce-gateway-paypal-express-checkout' ); ?>
+				</button>
+
+				<input type="hidden"
+					name="<?php echo esc_attr( $field_key ); ?>"
+					id="<?php echo esc_attr( $field_key ); ?>"
+					value="<?php echo esc_attr( $value ); ?>"
+				/>
+			</td>
+		</tr>
+		<?php
+
+		return ob_get_clean();
 	}
 }

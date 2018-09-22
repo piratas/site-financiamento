@@ -1,0 +1,12 @@
+/*=Links 
+---------------------------------------*/
+.bpwpc_select_row a:link, 
+.bpwpc_select_row a:visited{ 
+	text-decoration:none;
+	margin:0 5px;
+}
+.bpwpc_select_row a:hover, 
+.bpwpc_select_row a:focus, 
+.bpwpc_select_row a:active { 
+	outline: 0; 
+}

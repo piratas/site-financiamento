@@ -1,0 +1,85 @@
+# Translation of Plugins - Page Specific Menu Items - Stable (latest release) in Portuguese (Brazil)
+# This file is distributed under the same license as the Plugins - Page Specific Menu Items - Stable (latest release) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2017-05-05 04:09:54+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: GlotPress/2.4.0-alpha\n"
+"Language: pt_BR\n"
+"Project-Id-Version: Plugins - Page Specific Menu Items - Stable (latest release)\n"
+
+#. Author URI of the plugin/theme
+msgid "https://www.twitter.com/rogercomred"
+msgstr "https://www.twitter.com/rogercomred"
+
+#. Author of the plugin/theme
+msgid "Dharma Poudel (@rogercomred)"
+msgstr "Dharma Poudel (@rogercomred)"
+
+#. Description of the plugin/theme
+msgid "This plugin allows you to select menu items page wise."
+msgstr "Este plugin permite que você escolha os itens do menu indivudualmente por página."
+
+#. Plugin URI of the plugin/theme
+msgid "http://www.wordpress.org/plugins"
+msgstr "http://www.wordpress.org/plugins"
+
+#: page-specific-menu-items.php:383 trunk/page-specific-menu-items.php:383
+msgid "Settings"
+msgstr "Configura&ccedil;&otilde;es"
+
+#: page-specific-menu-items.php:313 trunk/page-specific-menu-items.php:313
+msgid "<ul><li>Menu items not defined. Please add one.</li></ul>"
+msgstr "<ul><li>Os itens do menu não foram definidos. Adicione um.</li></ul>"
+
+#: page-specific-menu-items.php:297 trunk/page-specific-menu-items.php:297
+msgid "invert selection"
+msgstr "inverter seleção"
+
+#: page-specific-menu-items.php:296 trunk/page-specific-menu-items.php:296
+msgid "unselect all"
+msgstr "limpar seleção"
+
+#: page-specific-menu-items.php:295 trunk/page-specific-menu-items.php:295
+msgid "select all"
+msgstr "selecionar todas"
+
+#: page-specific-menu-items.php:289 trunk/page-specific-menu-items.php:289
+msgid "Current Menu: "
+msgstr "Menu atual:"
+
+#. #-#-#-#-#  tmp-page-specific-menu-items.pot (Page Specific Menu Items 1.6.5)
+#.  #-#-#-#-#
+#. Plugin Name of the plugin/theme
+#: page-specific-menu-items.php:267 trunk/page-specific-menu-items.php:267
+msgid "Page Specific Menu Items"
+msgstr "Page Specific Menu Items"
+
+#: page-specific-menu-items.php:240 trunk/page-specific-menu-items.php:240
+msgid "Unfortunately no menus are available. Create one?"
+msgstr "Infelizmente nenhum menu está disponível. Criar um?"
+
+#: page-specific-menu-items.php:190 trunk/page-specific-menu-items.php:190
+msgid "Items default visibility"
+msgstr "Visibilidade inicial dos items"
+
+#: page-specific-menu-items.php:182 trunk/page-specific-menu-items.php:182
+msgid "Select Post Type"
+msgstr "Selecione o tipo de post"
+
+#: page-specific-menu-items.php:174 page-specific-menu-items.php:232
+#: trunk/page-specific-menu-items.php:174
+#: trunk/page-specific-menu-items.php:232
+msgid "Select Menu"
+msgstr "Selecione o menu"
+
+#: page-specific-menu-items.php:144 trunk/page-specific-menu-items.php:144
+msgid "<h2>Post Specific Menu Items Settings</h2>"
+msgstr "<h2>Configurações do Post Specific Menu Items</h2>"
+
+#: page-specific-menu-items.php:119 trunk/page-specific-menu-items.php:119
+msgid "PS MenuItems"
+msgstr "PS MenuItems"

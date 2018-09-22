@@ -2,7 +2,7 @@
 /**
  * Crowdfunding for WooCommerce - Open Pricing Section Settings
  *
- * @version 2.3.4
+ * @version 2.6.0
  * @since   2.2.0
  * @author  Algoritmika Ltd.
  */
@@ -19,7 +19,7 @@ class Alg_WC_Crowdfunding_Settings_Open_Pricing {
 	 * @version 2.2.0
 	 * @since   2.2.0
 	 */
-	public function __construct() {
+	function __construct() {
 
 		$this->id   = 'open_pricing';
 		$this->desc = __( 'Open Pricing (Name Your Price)', 'crowdfunding-for-woocommerce' );
@@ -42,7 +42,7 @@ class Alg_WC_Crowdfunding_Settings_Open_Pricing {
 	/**
 	 * get_settings.
 	 *
-	 * @version 2.3.4
+	 * @version 2.6.0
 	 * @since   2.2.0
 	 */
 	function get_settings() {
@@ -57,28 +57,28 @@ class Alg_WC_Crowdfunding_Settings_Open_Pricing {
 				'id'       => 'alg_crowdfunding_product_open_price_label_frontend',
 				'default'  => __( 'Name Your Price', 'crowdfunding-for-woocommerce' ),
 				'type'     => 'text',
-				'css'      => 'width:250px;',
+				'css'      => 'width:100%;',
 			),
 			array(
 				'title'    => __( 'Message on Empty Price', 'crowdfunding-for-woocommerce' ),
 				'id'       => 'alg_crowdfunding_product_open_price_messages_required',
 				'default'  => __( 'Price is required!', 'crowdfunding-for-woocommerce' ),
 				'type'     => 'text',
-				'css'      => 'width:250px;',
+				'css'      => 'width:100%;',
 			),
 			array(
 				'title'    => __( 'Message on Price too Small', 'crowdfunding-for-woocommerce' ),
 				'id'       => 'alg_crowdfunding_product_open_price_messages_to_small',
 				'default'  => __( 'Entered price is too small!', 'crowdfunding-for-woocommerce' ),
 				'type'     => 'text',
-				'css'      => 'width:250px;',
+				'css'      => 'width:100%;',
 			),
 			array(
 				'title'    => __( 'Message on Price too Big', 'crowdfunding-for-woocommerce' ),
 				'id'       => 'alg_crowdfunding_product_open_price_messages_to_big',
 				'default'  => __( 'Entered price is too big!', 'crowdfunding-for-woocommerce' ),
 				'type'     => 'text',
-				'css'      => 'width:250px;',
+				'css'      => 'width:100%;',
 			),
 			array(
 				'type'     => 'sectionend',
@@ -94,7 +94,7 @@ class Alg_WC_Crowdfunding_Settings_Open_Pricing {
 				'id'       => 'alg_crowdfunding_open_price_template',
 				'default'  => '<label for="alg_crowdfunding_open_price">%title%</label> %input_field% %currency_symbol%',
 				'type'     => 'textarea',
-				'css'      => 'min-width:300px;width:100%;height:50px;',
+				'css'      => 'width:100%;height:50px;',
 			),
 			array(
 				'type'     => 'sectionend',

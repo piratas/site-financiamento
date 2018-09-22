@@ -1,14 +1,31 @@
 /**
  * alg-progressbar.
  *
- * @version 2.3.0
+ * @version 2.5.0
  * @since   2.3.0
  */
 jQuery(document).ready(function() {
 	jQuery('.alg-progress-bar').each(function() {
-		var the_type = jQuery(this).attr('type');
-		var the_color = jQuery(this).attr('color');
-		var text_color = jQuery(this).attr('text_color');
+		var the_type                        = jQuery(this).attr('type');
+		var the_color                       = jQuery(this).attr('color');
+		var text_color                      = jQuery(this).attr('text_color');
+		var text_position                   = jQuery(this).attr('text_position');                   // line only
+		var text_position_variable_max_left = jQuery(this).attr('text_position_variable_max_left'); // line only
+		var text_top                        = jQuery(this).attr('text_top');                        // line only
+		var the_value                       = jQuery(this).attr('value');                           // line only
+		var text_right                      = 'inherit';                                            // line only
+		var text_left                       = 'inherit';                                            // line only
+		if ( 'variable' == text_position ) {
+			text_left = Math.round(the_value * 100);
+			if (text_left > text_position_variable_max_left) {
+				text_left = text_position_variable_max_left;
+			}
+			text_left = text_left + '%';
+		} else if ( 'left' == text_position ) {
+			text_left = 0;
+		} else { // if ( 'right' == text_position ) // default
+			text_right = 0;
+		}
 		if ( 'line' == the_type ) {
 			var bar = new ProgressBar.Line(this, {
 				strokeWidth: 4,
@@ -20,12 +37,11 @@ jQuery(document).ready(function() {
 				svgStyle: {width: '100%', height: '100%'},
 				text: {
 					style: {
-						// Text color.
-						// Default: same as stroke color (options.color)
 						color: text_color,
 						position: 'absolute',
-						right: '0',
-						top: '30px',
+						right: text_right,
+						left: text_left,
+						top: text_top,
 						padding: 0,
 						margin: 0,
 						transform: null
@@ -42,8 +58,7 @@ jQuery(document).ready(function() {
 		} else if ( 'circle' == the_type ) {
 			var bar = new ProgressBar.Circle(this, {
 				color: text_color,
-				// This has to be the same size as the maximum width to
-				// prevent clipping
+				// This has to be the same size as the maximum width to prevent clipping
 				strokeWidth: 4,
 				trailWidth: 1,
 				easing: 'easeInOut',

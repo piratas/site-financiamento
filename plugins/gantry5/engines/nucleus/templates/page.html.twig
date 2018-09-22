@@ -1,6 +1,7 @@
 {%- do gantry.debugger.startTimer('render', 'Rendering page') %}
 {%- do gantry.theme.setLayout() -%}
-{%- set segments = gantry.theme.segments -%}
+{%- do gantry.theme.loadAtoms() -%}
+{%- set segments = gantry.theme.segments() -%}
 
 {%- set content %}
     {% if gantry.theme.hasContent() %}
@@ -85,7 +86,7 @@
         {{ page_offcanvas|raw }}
         <div id="g-page-surround">
             {% if page_offcanvas|trim %}
-            <div class="g-offcanvas-hide g-offcanvas-toggle" data-offcanvas-toggle><i class="fa fa-fw fa-bars"></i></div>
+            <div class="g-offcanvas-hide g-offcanvas-toggle" data-offcanvas-toggle><i class="fa fa-fw fa-bars" aria-hidden="true"></i></div>
             {% endif %}
             {{ page_top|raw }}
             {{ page_layout|raw }}

@@ -8,9 +8,9 @@ function woo_pp_start_checkout() {
 		wp_safe_redirect( $redirect_url );
 		exit;
 	} catch( PayPal_API_Exception $e ) {
-		wc_gateway_ppec_format_paypal_api_exception( $e->errors );
+		wc_add_notice( $e->getMessage(), 'error' );
 
-		$redirect_url = WC()->cart->get_cart_url();
+		$redirect_url = wc_get_cart_url();
 		$settings     = wc_gateway_ppec()->settings;
 		$client       = wc_gateway_ppec()->client;
 
@@ -37,12 +37,11 @@ function woo_pp_start_checkout() {
 	}
 }
 
+/**
+ * @deprecated
+ */
 function wc_gateway_ppec_format_paypal_api_exception( $errors ) {
-	$error_strings = array();
-	foreach ( $errors as $error ) {
-		$error_strings[] = $error->maptoBuyerFriendlyError();
-	}
-	wc_add_notice( __( 'Payment error:', 'woocommerce-gateway-paypal-express-checkout' ) . '<ul><li>' . implode( '</li><li>', $error_strings ) . '</li></ul>', 'error' );
+	_deprecated_function( 'wc_gateway_ppec_format_paypal_api_exception', '1.2.0', '' );
 }
 
 /**
@@ -67,4 +66,28 @@ function wc_gateway_ppec_log( $message ) {
 	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 		error_log( $message );
 	}
+}
+
+/**
+ * Whether PayPal credit is supported.
+ *
+ * @since 1.5.0
+ *
+ * @return bool Returns true if PayPal credit is supported
+ */
+function wc_gateway_ppec_is_credit_supported() {
+	$base = wc_get_base_location();
+
+	return 'US' === $base['country'];
+}
+
+/**
+ * Checks whether buyer is checking out with PayPal Credit.
+ *
+ * @since 1.2.0
+ *
+ * @return bool Returns true if buyer is checking out with PayPal Credit
+ */
+function wc_gateway_ppec_is_using_credit() {
+	return ! empty( $_GET['use-ppc'] ) && 'true' === $_GET['use-ppc'];
 }

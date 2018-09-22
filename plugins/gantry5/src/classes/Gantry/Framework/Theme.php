@@ -91,6 +91,17 @@ class Theme extends AbstractTheme
     }
 
     /**
+     * Convert all stream uris into proper links.
+     */
+    public function postProcessOutput($html)
+    {
+        $gantry = Gantry::instance();
+
+        // Only filter our streams. If there's an error (bad UTF8), fallback with original output.
+        return $gantry['document']->urlFilter($html, false, 0, true) ?: $html;
+    }
+
+    /**
      * @see AbstractTheme::renderer()
      */
     public function renderer()
@@ -154,7 +165,7 @@ class Theme extends AbstractTheme
             add_action('load-widgets.php',
                 function() {
                     add_action('admin_notices', function() {
-                        echo '<div class="error"><p>' . __('No widget positions have been defined. Please add some in Gantry 5 Layout Manger or read <a target="_blank" href="http://docs.gantry.org/gantry5/particles/position">documentation</a> on how to create widget positions.', 'gantry5') . '</p></div>';
+                        echo '<div class="error"><p>' . __('No widget positions have been defined. Please add some in Gantry 5 Layout Manger or read <a target="_blank" rel="noopener" href="http://docs.gantry.org/gantry5/particles/position">documentation</a> on how to create widget positions.', 'gantry5') . '</p></div>';
                     });
                 });
         } else {
@@ -398,6 +409,7 @@ class Theme extends AbstractTheme
         add_filter('timber_context', [$this, 'getContext']);
         add_filter('timber/loader/twig', [$this, 'timber_loader_twig']);
         add_filter('timber/cache/location', [$this, 'timber_cache_location']);
+        add_filter('timber_compile_result', [$this, 'postProcessOutput']);
         add_filter('wp_theme_editor_filetypes', [$this, 'extend_theme_editor_filetypes']);
         add_filter('get_twig', [$this, 'extendTwig'], 100);
         add_filter('the_content', [$this, 'url_filter'], 0);

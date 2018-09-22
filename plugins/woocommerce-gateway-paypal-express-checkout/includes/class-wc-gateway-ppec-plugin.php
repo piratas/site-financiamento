@@ -145,6 +145,9 @@ class WC_Gateway_PPEC_Plugin {
 		add_action( 'plugins_loaded', array( $this, 'bootstrap' ) );
 		add_filter( 'allowed_redirect_hosts' , array( $this, 'whitelist_paypal_domains_for_redirect' ) );
 		add_action( 'init', array( $this, 'load_plugin_textdomain' ) );
+
+		add_filter( 'plugin_action_links_' . plugin_basename( $this->file ), array( $this, 'plugin_action_links' ) );
+		add_action( 'wp_ajax_ppec_dismiss_notice_message', array( $this, 'ajax_dismiss_notice' ) );
 	}
 
 	public function bootstrap() {
@@ -162,7 +165,6 @@ class WC_Gateway_PPEC_Plugin {
 			delete_option( 'wc_gateway_ppce_prompt_to_connect' );
 		} catch ( Exception $e ) {
 			if ( in_array( $e->getCode(), array( self::ALREADY_BOOTSTRAPED, self::DEPENDENCIES_UNSATISFIED ) ) ) {
-
 				update_option( 'wc_gateway_ppce_bootstrap_warning_message', $e->getMessage() );
 			}
 
@@ -176,26 +178,71 @@ class WC_Gateway_PPEC_Plugin {
 
 	public function show_bootstrap_warning() {
 		$dependencies_message = get_option( 'wc_gateway_ppce_bootstrap_warning_message', '' );
-		if ( ! empty( $dependencies_message ) ) {
+		if ( ! empty( $dependencies_message ) && 'yes' !== get_option( 'wc_gateway_ppec_bootstrap_warning_message_dismissed', 'no' ) ) {
 			?>
-			<div class="error fade">
+			<div class="notice notice-warning is-dismissible ppec-dismiss-bootstrap-warning-message">
 				<p>
 					<strong><?php echo esc_html( $dependencies_message ); ?></strong>
 				</p>
 			</div>
+			<script>
+			( function( $ ) {
+				$( '.ppec-dismiss-bootstrap-warning-message' ).on( 'click', '.notice-dismiss', function() {
+					jQuery.post( "<?php echo admin_url( 'admin-ajax.php' ); ?>", {
+						action: "ppec_dismiss_notice_message",
+						dismiss_action: "ppec_dismiss_bootstrap_warning_message",
+						nonce: "<?php echo esc_js( wp_create_nonce( 'ppec_dismiss_notice' ) ); ?>"
+					} );
+				} );
+			} )( jQuery );
+			</script>
 			<?php
 		}
 
 		$prompt_connect = get_option( 'wc_gateway_ppce_prompt_to_connect', '' );
-		if ( ! empty( $prompt_connect ) ) {
+		if ( ! empty( $prompt_connect ) && 'yes' !== get_option( 'wc_gateway_ppec_prompt_to_connect_message_dismissed', 'no' ) ) {
 			?>
-			<div class="notice notice-warning">
+			<div class="notice notice-warning is-dismissible ppec-dismiss-prompt-to-connect-message">
 				<p>
 					<strong><?php echo wp_kses( $prompt_connect, array( 'a' => array( 'href' => array() ) ) ); ?></strong>
 				</p>
 			</div>
+			<script>
+			( function( $ ) {
+				$( '.ppec-dismiss-prompt-to-connect-message' ).on( 'click', '.notice-dismiss', function() {
+					jQuery.post( "<?php echo admin_url( 'admin-ajax.php' ); ?>", {
+						action: "ppec_dismiss_notice_message",
+						dismiss_action: "ppec_dismiss_prompt_to_connect",
+						nonce: "<?php echo esc_js( wp_create_nonce( 'ppec_dismiss_notice' ) ); ?>"
+					} );
+				} );
+			} )( jQuery );
+			</script>
 			<?php
 		}
+	}
+
+	/**
+	 * AJAX handler for dismiss notice action.
+	 *
+	 * @since 1.4.7
+	 * @version 1.4.7
+	 */
+	public function ajax_dismiss_notice() {
+		if ( empty( $_POST['dismiss_action'] ) ) {
+			return;
+		}
+
+		check_ajax_referer( 'ppec_dismiss_notice', 'nonce' );
+		switch ( $_POST['dismiss_action'] ) {
+			case 'ppec_dismiss_bootstrap_warning_message':
+				update_option( 'wc_gateway_ppec_bootstrap_warning_message_dismissed', 'yes' );
+				break;
+			case 'ppec_dismiss_prompt_to_connect':
+				update_option( 'wc_gateway_ppec_prompt_to_connect_message_dismissed', 'yes' );
+				break;
+		}
+		wp_die();
 	}
 
 	/**
@@ -221,7 +268,7 @@ class WC_Gateway_PPEC_Plugin {
 			throw new Exception( $openssl_warning, self::DEPENDENCIES_UNSATISFIED );
 		}
 
-		preg_match( '/^OpenSSL ([\d.]+)/', OPENSSL_VERSION_TEXT, $matches );
+		preg_match( '/^(?:Libre|Open)SSL ([\d.]+)/', OPENSSL_VERSION_TEXT, $matches );
 		if ( empty( $matches[1] ) ) {
 			throw new Exception( $openssl_warning, self::DEPENDENCIES_UNSATISFIED );
 		}
@@ -243,7 +290,7 @@ class WC_Gateway_PPEC_Plugin {
 		$credential = $this->settings->get_active_api_credentials();
 		if ( ! is_a( $credential, 'WC_Gateway_PPEC_Client_Credential' ) || '' === $credential->get_username() ) {
 			$setting_link = $this->get_admin_setting_link();
-			throw new Exception( __( 'PayPal Express Checkout is almost ready. To get started, <a href="' . $setting_link . '">connect your PayPal account</a>.', 'woocommerce-gateway-paypal-express-checkout' ), self::NOT_CONNECTED );
+			throw new Exception( sprintf( __( 'PayPal Express Checkout is almost ready. To get started, <a href="%s">connect your PayPal account</a>.', 'woocommerce-gateway-paypal-express-checkout' ), esc_url( $setting_link ) ), self::NOT_CONNECTED );
 		}
 	}
 
@@ -347,5 +394,52 @@ class WC_Gateway_PPEC_Plugin {
 	 */
 	public function load_plugin_textdomain() {
 		load_plugin_textdomain( 'woocommerce-gateway-paypal-express-checkout', false, plugin_basename( $this->plugin_path ) . '/languages' );
+	}
+
+	/**
+	 * Add relevant links to plugins page.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param array $links Plugin action links
+	 *
+	 * @return array Plugin action links
+	 */
+	public function plugin_action_links( $links ) {
+		$plugin_links = array();
+
+		if ( function_exists( 'WC' ) ) {
+			$setting_url = $this->get_admin_setting_link();
+			$plugin_links[] = '<a href="' . esc_url( $setting_url ) . '">' . esc_html__( 'Settings', 'woocommerce-gateway-paypal-express-checkout' ) . '</a>';
+		}
+
+		$plugin_links[] = '<a href="https://docs.woocommerce.com/document/paypal-express-checkout/">' . esc_html__( 'Docs', 'woocommerce-gateway-paypal-express-checkout' ) . '</a>';
+
+		return array_merge( $plugin_links, $links );
+	}
+
+	/**
+	 * Check if shipping is needed for PayPal. This only checks for virtual products (#286),
+	 * but skips the check if there are no shipping methods enabled (#249).
+	 *
+	 * @since 1.4.1
+	 * @version 1.4.1
+	 *
+	 * @return bool
+	 */
+	public static function needs_shipping() {
+		$cart_contents  = WC()->cart->cart_contents;
+		$needs_shipping = false;
+
+		if ( ! empty( $cart_contents ) ) {
+			foreach ( $cart_contents as $cart_item_key => $values ) {
+				if ( $values['data']->needs_shipping() ) {
+					$needs_shipping = true;
+					break;
+				}
+			}
+		}
+
+		return apply_filters( 'woocommerce_cart_needs_shipping', $needs_shipping );
 	}
 }

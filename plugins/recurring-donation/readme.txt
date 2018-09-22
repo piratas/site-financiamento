@@ -1,10 +1,10 @@
 === Recurring PayPal Donations ===
 Contributors: wpecommerce 
 Donate link: https://wp-ecommerce.net/
-Tags: button, donate, donation, donations, payment, paypal, paypal donation, shortcode, sidebar, widget, recurring, subscription, monthly, re-occuring
+Tags: subscription, donate, donation, paypal, recurring, payment, donations, paypal donation, button, shortcode, sidebar, widget, monthly
 Requires at least: 3.0
-Tested up to: 4.7
-Stable tag: 1.0.3
+Tested up to: 4.8
+Stable tag: 1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,9 +64,15 @@ Use the following shortcode to add a recurring donation button to your website:
 
 [dntplgn recurring_amt1="25" recurring_amt2="50" recurring_amt3="100" item_name="For the victims of XX"]
 
-= Can i add more then one Donate Plagin form on the same page or post? =
+= Can I add more then one Donate Plagin form on the same page or post? =
 
 Yes, you can add multiple Donate Plugin forms on your page or post or text widget.
+
+= Can I create multiple recurring donation widget using different paypal accounts? =
+
+Yes, you can specify the paypal email address (where the donation should go to) in the shortcode. Example below:
+
+[dntplgn recurring_amt1="10" recurring_amt2="20" recurring_amt3="50" item_name="For a good cause" paypal_email="paypalemail@example.com"]
 
 == Screenshots ==
 
@@ -76,12 +82,15 @@ Yes, you can add multiple Donate Plugin forms on your page or post or text widge
 
 == Changelog ==
 
-= 1.0.3 =
+= 1.1 =
+* The shortcode can now accept a paypal email address as a parameter. This will allow you to create multiple recurring donation widget with different paypal email address.
+* The recurring amount will work correctly with the decimal places when the amounts are specified in the shortcode.
+* Improved the usage instructions wording in the settings interface.
 
+= 1.0.3 =
 * Recurring Donation plugin is now compatible with WordPress 4.3
 
 = 1.0.1 =
-
 * First Commit
 
 == Upgrade Notice ==

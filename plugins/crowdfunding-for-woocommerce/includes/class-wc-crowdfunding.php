@@ -2,7 +2,7 @@
 /**
  * Crowdfunding for WooCommerce
  *
- * @version 2.3.2
+ * @version 2.4.0
  * @since   1.0.0
  * @author  Algoritmika Ltd.
  */
@@ -16,7 +16,7 @@ class Alg_WC_Crowdfunding {
 	/**
 	 * Constructor.
 	 *
-	 * @version 2.3.1
+	 * @version 2.3.6
 	 */
 	function __construct() {
 
@@ -82,8 +82,11 @@ class Alg_WC_Crowdfunding {
 			require_once( 'class-wc-crowdfunding-my-account.php' );
 
 			// Shortcodes
-			require_once( 'class-wc-crowdfunding-shortcodes.php' );
-			require_once( 'class-wc-crowdfunding-shortcodes-products-add-form.php' );
+			require_once( 'shortcodes/class-wc-crowdfunding-shortcodes.php' );
+			require_once( 'shortcodes/class-wc-crowdfunding-shortcodes-general.php' );
+			require_once( 'shortcodes/class-wc-crowdfunding-shortcodes-time.php' );
+			require_once( 'shortcodes/class-wc-crowdfunding-shortcodes-progress-bar.php' );
+			require_once( 'shortcodes/class-wc-crowdfunding-shortcodes-products-add-form.php' );
 
 			// Crons
 			require_once( 'class-wc-crowdfunding-crons.php' );
@@ -199,29 +202,30 @@ class Alg_WC_Crowdfunding {
 	/**
 	 * Returns false if already finished.
 	 *
-	 * @version 2.3.2
+	 * @version 2.4.0
 	 * @return  bool
 	 */
 	function is_active( $_product ) {
+		$_product_id = alg_get_product_id_or_variation_parent_id( $_product );
 		if ( 'yes' === get_option( 'alg_crowdfunding_end_on_time', 'yes' ) ) {
-			$end_date_str = get_post_meta( $_product->id, '_' . 'alg_crowdfunding_deadline', true );
-			$end_time_str = get_post_meta( $_product->id, '_' . 'alg_crowdfunding_deadline_time', true );
+			$end_date_str = get_post_meta( $_product_id, '_' . 'alg_crowdfunding_deadline', true );
+			$end_time_str = get_post_meta( $_product_id, '_' . 'alg_crowdfunding_deadline_time', true );
 			$end_datetime = ( '' != $end_date_str ) ? strtotime( trim( $end_date_str . ' ' . $end_time_str, ' ' ) ) : 0;
 			if ( $end_datetime > 0 && ( $end_datetime - ( (int) current_time( 'timestamp' ) ) ) < 0 ) {
 				return false;
 			}
 		}
 		if ( 'yes' === get_option( 'alg_crowdfunding_end_on_goal_reached', 'no' ) ) {
-			$goal_sum     = get_post_meta( $_product->id, '_' . 'alg_crowdfunding_goal_sum', true );
-			$goal_backers = get_post_meta( $_product->id, '_' . 'alg_crowdfunding_goal_backers', true );
-			$goal_items   = get_post_meta( $_product->id, '_' . 'alg_crowdfunding_goal_items', true );
-			if ( '' != $goal_sum     && alg_get_product_orders_data( 'orders_sum',   array( 'product_id' => $_product->id ) ) >= $goal_sum ) {
+			$goal_sum     = get_post_meta( $_product_id, '_' . 'alg_crowdfunding_goal_sum', true );
+			$goal_backers = get_post_meta( $_product_id, '_' . 'alg_crowdfunding_goal_backers', true );
+			$goal_items   = get_post_meta( $_product_id, '_' . 'alg_crowdfunding_goal_items', true );
+			if ( '' != $goal_sum     && alg_get_product_orders_data( 'orders_sum',   array( 'product_id' => $_product_id ) ) >= $goal_sum ) {
 				return false;
 			}
-			if ( '' != $goal_backers && alg_get_product_orders_data( 'total_orders', array( 'product_id' => $_product->id ) ) >= $goal_backers ) {
+			if ( '' != $goal_backers && alg_get_product_orders_data( 'total_orders', array( 'product_id' => $_product_id ) ) >= $goal_backers ) {
 				return false;
 			}
-			if ( '' != $goal_items   && alg_get_product_orders_data( 'total_items',  array( 'product_id' => $_product->id ) ) >= $goal_items ) {
+			if ( '' != $goal_items   && alg_get_product_orders_data( 'total_items',  array( 'product_id' => $_product_id ) ) >= $goal_items ) {
 				return false;
 			}
 		}
@@ -231,12 +235,13 @@ class Alg_WC_Crowdfunding {
 	/**
 	 * Returns false if not started yet.
 	 *
-	 * @version 2.3.2
+	 * @version 2.4.0
 	 * @return  bool
 	 */
 	function is_started( $_product ) {
-		$start_date_str = get_post_meta( $_product->id, '_' . 'alg_crowdfunding_startdate', true );
-		$start_time_str = get_post_meta( $_product->id, '_' . 'alg_crowdfunding_starttime', true );
+		$_product_id = alg_get_product_id_or_variation_parent_id( $_product );
+		$start_date_str = get_post_meta( $_product_id, '_' . 'alg_crowdfunding_startdate', true );
+		$start_time_str = get_post_meta( $_product_id, '_' . 'alg_crowdfunding_starttime', true );
 		$start_datetime = ( '' != $start_date_str ) ? strtotime( trim( $start_date_str . ' ' . $start_time_str, ' ' ) ) : 0;
 		if ( $start_datetime > 0 && ( $start_datetime - ( (int) current_time( 'timestamp' ) ) ) > 0 ) return false;
 		return true;
@@ -248,7 +253,7 @@ class Alg_WC_Crowdfunding {
 	 * @version 2.0.0
 	 * @return  bool
 	 */
-	public function is_purchasable( $purchasable, $_product ) {
+	function is_purchasable( $purchasable, $_product ) {
 		if ( $this->is_crowdfunding_product( $_product ) && ( ! $this->is_started( $_product ) || ! $this->is_active( $_product ) ) ) {
 			$purchasable = false;
 		}
@@ -261,7 +266,7 @@ class Alg_WC_Crowdfunding {
 	 * @version 2.3.2
 	 * @return  bool
 	 */
-	public function is_purchasable_html() {
+	function is_purchasable_html() {
 		$_product = wc_get_product();
 		if ( $this->is_crowdfunding_product( $_product ) && ! $this->is_purchasable ( true, $_product ) ) {
 			if ( ! $this->is_started( $_product ) ) echo do_shortcode( get_option( 'alg_woocommerce_crowdfunding_message_not_started' ) );
@@ -272,25 +277,26 @@ class Alg_WC_Crowdfunding {
 	/**
 	 * is_crowdfunding_product.
 	 *
-	 * @version 2.1.0
+	 * @version 2.4.0
 	 * @since   2.0.0
 	 */
 	function is_crowdfunding_product( $_product = '' ) {
 		if ( '' == $_product ) $_product = wc_get_product();
 		if ( '' == $_product ) return '';
-//		return ( get_post_meta( $_product->id, '_' . 'alg_crowdfunding_goal_sum', true ) > 0 ) ? true : false;
-		return ( 'yes' === get_post_meta( $_product->id, '_' . 'alg_crowdfunding_enabled', true ) ) ? true : false;
+		$_product_id = alg_get_product_id_or_variation_parent_id( $_product );
+		return ( 'yes' === get_post_meta( $_product_id, '_' . 'alg_crowdfunding_enabled', true ) );
 	}
 
 	/**
 	 * change_add_to_cart_button_text_single.
 	 *
-	 * @version 2.0.0
+	 * @version 2.4.0
 	 * @since   2.0.0
 	 */
 	function change_add_to_cart_button_text_single( $add_to_cart_text, $_product ) {
 		if ( ! $this->is_crowdfunding_product( $_product ) ) return $add_to_cart_text;
-		$the_text = get_post_meta( $_product->id, '_alg_crowdfunding_button_label_single', true );
+		$_product_id = alg_get_product_id_or_variation_parent_id( $_product );
+		$the_text = get_post_meta( $_product_id, '_alg_crowdfunding_button_label_single', true );
 		$the_text = ( '' != $the_text ) ? $the_text : get_option( 'alg_woocommerce_crowdfunding_button_single' );
 		return $the_text;
 	}
@@ -298,12 +304,13 @@ class Alg_WC_Crowdfunding {
 	/**
 	 * change_add_to_cart_button_text_archive.
 	 *
-	 * @version 2.0.0
+	 * @version 2.4.0
 	 * @since   2.0.0
 	 */
 	function change_add_to_cart_button_text_archive( $add_to_cart_text, $_product ) {
 		if ( ! $this->is_crowdfunding_product( $_product ) ) return $add_to_cart_text;
-		$the_text = get_post_meta( $_product->id, '_alg_crowdfunding_button_label_loop', true );
+		$_product_id = alg_get_product_id_or_variation_parent_id( $_product );
+		$the_text = get_post_meta( $_product_id, '_alg_crowdfunding_button_label_loop', true );
 		$the_text = ( '' != $the_text ) ? $the_text : get_option( 'alg_woocommerce_crowdfunding_button_archives' );
 		return $the_text;
 	}

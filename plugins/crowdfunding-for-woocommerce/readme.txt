@@ -1,10 +1,10 @@
 === Crowdfunding for WooCommerce ===
-Contributors: algoritmika,anbinder
+Contributors: algoritmika, anbinder
 Donate link: https://www.paypal.me/anbinder
-Tags: woocommerce,crowdfunding
+Tags: woocommerce, crowdfunding
 Requires at least: 4.4
-Tested up to: 4.7
-Stable tag: 2.3.4
+Tested up to: 4.9
+Stable tag: 2.6.0
 License: GNU General Public License v3.0
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -67,7 +67,7 @@ When displaying crowdfunding data for the product, you should use plugin's short
 * Drop us a line at [www.algoritmika.com](http://www.algoritmika.com).
 
 = More =
-* Visit the [Crowdfunding for WooCommerce plugin page](http://coder.fm/item/crowdfunding-for-woocommerce-plugin/).
+* Visit the [Crowdfunding for WooCommerce plugin page](https://wpcodefactory.com/item/crowdfunding-woocommerce-wordpress-plugin/).
 
 == Installation ==
 
@@ -76,6 +76,41 @@ When displaying crowdfunding data for the product, you should use plugin's short
 3. Start by visiting plugin settings at WooCommerce > Settings > Crowdfunding. Then try adding or editing a product.
 
 == Changelog ==
+
+= 2.6.0 - 26/11/2017 =
+* Fix - Product Data Update - Fixed for new products.
+* Dev - WooCommerce v3.2.0 compatibility - Admin settings - `select` type display fixed.
+* Dev - "Update Data Now" button for single product added (meta box).
+* Dev - Admin settings - Minor restyling.
+* Dev - Filter - Fix.
+* Dev - Functions - `alg_get_product_id_or_variation_parent_id()` and `alg_get_product_post_status()` - Checking for valid `$_product`.
+* Dev - Code refactoring and clean up.
+
+= 2.5.0 - 11/10/2017 =
+* Dev - Product Data Update - Ordering products by data updated time (instead of title).
+* Dev - General - Products Data Update Options - "Update data now" button added.
+* Dev - General - Products Data Update Options - "Previous update triggered at ..." info added.
+* Dev - General - Advanced Options - "Log" option added.
+* Dev - General - Settings restyled.
+* Dev - Shortcodes - `get_progress_bar()` - `text_position`, `text_position_variable_max_left`, `text_top` attributes added. Code refactoring.
+* Dev - "Reset settings" option added.
+* Dev - Settings sections array stored as main class property.
+
+= 2.4.0 - 13/05/2017 =
+* Dev - WooCommerce v3.x.x compatibility - Product post status.
+* Dev - WooCommerce v3.x.x compatibility - Product ID.
+* Dev - WooCommerce v3.x.x compatibility - Price hook (`woocommerce_get_price` and `woocommerce_product_get_price`).
+* Fix - `alg_calculate_product_orders_data()` - Additional check for product added.
+* Tweak - Plugin link changed from `http://coder.fm` to `https://wpcodefactory.com`.
+* Tweak - Minor code refactoring.
+
+= 2.3.6 - 22/03/2017 =
+* Dev - Language (POT) file updated.
+* Dev - Code refactoring - Shortcodes divided into separate files.
+* Dev - Percent from total in shortcodes: `percent` value for `type` attribute (and `round_precision` attribute) added to `[product_crowdfunding_total_sum]`, `[product_crowdfunding_total_backers]`, `[product_crowdfunding_total_items]`, `[product_crowdfunding_goal_remaining]`, `[product_crowdfunding_goal_backers_remaining]`, `[product_crowdfunding_goal_items_remaining]` shortcodes.
+
+= 2.3.5 - 10/03/2017 =
+* Dev - `alg_crowdfunding_output_shortcode_price` filter added.
 
 = 2.3.4 - 21/12/2016 =
 * Dev - `load_plugin_textdomain` moved from `init` hook to constructor.

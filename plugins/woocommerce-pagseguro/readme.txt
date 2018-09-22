@@ -1,10 +1,10 @@
 === WooCommerce PagSeguro ===
 Contributors: claudiosanches, Gabriel Reguly
-Donate link: http://claudiosmweb.com/doacoes/
+Donate link: https://claudiosanches.com/doacoes/
 Tags: woocommerce, pagseguro, payment
 Requires at least: 4.0
 Tested up to: 4.7
-Stable tag: 2.11.5
+Stable tag: 2.12.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,7 +42,7 @@ Além que é possível utilizar o novo [sandbox do PagSeguro](https://sandbox.pa
 
 = Compatibilidade =
 
-Compatível desde a versão 2.2.x até 2.6.x do WooCommerce.
+Compatível desde a versão 2.4.x até 3.0.x do WooCommerce.
 
 Este plugin também é compatível com o [WooCommerce Extra Checkout Fields for Brazil](http://wordpress.org/plugins/woocommerce-extra-checkout-fields-for-brazil/), desta forma é possível enviar os campos de "CPF", "número do endereço" e "bairro" (para o Checkout Transparente é obrigatório o uso deste plugin).
 
@@ -189,7 +189,7 @@ Para produtos baixáveis a configuração padrão do WooCommerce é permitir o a
 
 = Ao tentar finalizar a compra aparece a mensagem "PagSeguro: Um erro ocorreu ao processar o seu pagamento, por favor, tente novamente ou entre em contato para obter ajuda." o que fazer? =
 
-Esta mensagem geralmente aparece por causa que não foi configurado um **Token válido**.  
+Esta mensagem geralmente aparece por causa que não foi configurado um **Token válido**.
 Gere um novo Token no PagSeguro em "Preferências" > "[Integrações](https://pagseguro.uol.com.br/preferencias/integracoes.jhtml)" e adicione ele nas configurações do plugin.
 
 Outro erro comum é gerar um token e cadastrar nas configurações do plugin um e-mail que não é o proprietário do token, então tenha certeza que estes dados estão realmente corretos!
@@ -200,10 +200,10 @@ Se você tem certeza que o Token e Login estão corretos você deve acessar a p�
 
 Para quem estiver utilizando o **Checkout Transparente** é obrigatório o uso do plugin [WooCommerce Extra Checkout Fields for Brazil](http://wordpress.org/plugins/woocommerce-extra-checkout-fields-for-brazil/) para enviar o CPF ao PagSeguro, caso o contrário será impossível de finalizar o pedido, veja no [guia de instalação](http://wordpress.org/plugins/woocommerce-pagseguro/installation/) como fazer isso.
 
-Por último é possível ativar a opção de **Log de depuração** nas configurações do plugin e tentar novamente fechar um pedido (você deve tentar fechar um pedido para que o log será gerado e o erro gravado nele).  
+Por último é possível ativar a opção de **Log de depuração** nas configurações do plugin e tentar novamente fechar um pedido (você deve tentar fechar um pedido para que o log será gerado e o erro gravado nele).
 Com o log é possível saber exatamente o que esta dando de errado com a sua instalação.
 
-Caso você não entenda o conteúdo do log não tem problema, você pode me abrir um [tópico no fórum do plugin](https://wordpress.org/support/plugin/woocommerce-pagseguro#postform) com o link do log (utilize o [pastebin.com](http://pastebin.com) ou o [gist.github.com](http://gist.github.com) para salvar o conteúdo do log).  
+Caso você não entenda o conteúdo do log não tem problema, você pode me abrir um [tópico no fórum do plugin](https://wordpress.org/support/plugin/woocommerce-pagseguro#postform) com o link do log (utilize o [pastebin.com](http://pastebin.com) ou o [gist.github.com](http://gist.github.com) para salvar o conteúdo do log).
 
 = O status do pedido não é alterado automaticamente? =
 
@@ -225,7 +225,7 @@ Sim, basta ativar esta nas opções do plugin.
 
 = Funciona com o checkout transparente do PagSeguro? =
 
-Sim, funciona. Você deve ativar nas opções do plugin.  
+Sim, funciona. Você deve ativar nas opções do plugin.
 Note que é necessário aprovação do PagSeguro para utilizar o Checkout Transparente, saiba mais em "[Como receber pagamentos pelo PagSeguro](https://pagseguro.uol.com.br/receba-pagamentos.jhtml)".
 
 = Funciona com o Sandbox do PagSeguro? =
@@ -254,6 +254,33 @@ Por favor, caso você tenha algum problema com o funcionamento do plugin, [abra 
 6. Pagamento com boleto bancário usando o Checkout Transparente.
 
 == Changelog ==
+
+= 2.12.5 - 2017/05/11 =
+
+* Corrigido valor total das parcelas do cartão de crédito no checkout transparente, o valor tinha parado de ser atualizado no WooCommerce 3.0.
+
+= 2.12.4 - 2017/04/12 =
+
+* Corrigido icones no checkout transparente.
+
+= 2.12.3 - 2017/04/10 =
+
+* Corrigido `ndash` que aparecia no nome dos itens listados no PagSeguro.
+
+= 2.12.2 - 2017/04/07 =
+
+* Adicionado suporte ao novo sistema de logs do WooCommerce 3.0, assim permitindo que seja utilizado sistema de logs personalizados.
+* Adicionado validação e higienização no código de transação do PagSeguro antes de salvar.
+
+= 2.12.1 - 2017/04/04 =
+
+* Correção dos títulos dos campos personalizados salvos ao fazer um pedido.
+
+= 2.12.0 - 2017/04/03 =
+
+* Adicionado suporte ao WooCommerce 3.0.
+* Alterado o tipo dos campos para `tel` no Checkout Transparente. (Possível com a ajuda de [Thiago Guimarães](https://github.com/thiagogsr)).
+* Correção nas máscaras do campos devido a mudança do plugin no [woocommerce-extra-checkout-fields-for-brazil](https://github.com/claudiosanches/woocommerce-extra-checkout-fields-for-brazil/pull/49). (Possível com a ajuda de [Thiago Guimarães](https://github.com/thiagogsr)).
 
 = 2.11.5 - 2017/01/17 =
 
@@ -286,6 +313,6 @@ Por favor, caso você tenha algum problema com o funcionamento do plugin, [abra 
 
 == Upgrade Notice ==
 
-= 2.11.5 =
+= 2.12.5 =
 
-* Adicionada nota dizendo que o pedido esta sendo feito no Brasil durante o Checkout transparente.
+* Corrigido valor total das parcelas do cartão de crédito no checkout transparente, o valor tinha parado de ser atualizado no WooCommerce 3.0.
